@@ -20,7 +20,5 @@ ENV MAVEN_CONFIG "$USER_HOME_DIR/.m2"
 ADD . /home/project
 WORKDIR /home/project
 
-#CMD tail -f /dev/null
-
 CMD mvn clean install \
    && mvn exec:java -Dexec.mainClass="unl.fct.srsc.HelloWorld"

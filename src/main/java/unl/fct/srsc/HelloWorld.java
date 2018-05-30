@@ -5,13 +5,19 @@ import redis.clients.jedis.Jedis;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.security.Key;
 
 public class HelloWorld {
 
     public static void main(String[] args) {
         try {
-            Jedis cli = new Jedis("localhost", 6379);
+
+            System.out.println("REDIS_SERVER: " + System.getenv("REDIS_SERVER"));
+
+            Jedis cli = new Jedis(System.getenv("REDIS_SERVER"), 6379);
             Cipher c = c = Cipher.getInstance("blowfish/ECB/PKCS5Padding", "SunJCE");
 
             Key keySecret = new SecretKeySpec("Passwords".getBytes(), "blowfish");
@@ -30,6 +36,7 @@ public class HelloWorld {
 
             cli.set(Hex.encodeHexString(encryptedKey), Hex.encodeHexString(ecryptedCore));
             System.out.println(cli.get(Hex.encodeHexString(encryptedKey)));
+
         }catch (Exception e) {
             e.printStackTrace();
         }
