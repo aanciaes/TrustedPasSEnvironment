@@ -5,7 +5,7 @@ ENV USER_HOME_DIR="/root"
 ENV SHA=b52956373fab1dd4277926507ab189fb797b3bc51a2a267a193c931fffad8408
 ENV BASE_URL=https://apache.osuosl.org/maven/maven-3/${MAVEN_VERSION}/binaries
 
-# Download maven
+# Download maven and install maven
 RUN mkdir -p /usr/share/maven /usr/share/maven/ref \
   && curl -fsSL -o /tmp/apache-maven.tar.gz ${BASE_URL}/apache-maven-${MAVEN_VERSION}-bin.tar.gz \
   && echo "${SHA}  /tmp/apache-maven.tar.gz" | sha256sum -c - \
@@ -21,4 +21,4 @@ ADD . /home/project
 WORKDIR /home/project
 
 CMD mvn clean install \
-   && mvn exec:java -Dexec.mainClass="unl.fct.srsc.HelloWorld"
+   && mvn exec:java -Dexec.mainClass="unl.fct.srsc.RedisTrustedClient"
