@@ -79,9 +79,7 @@ public class RedisTrustedClient {
         try {
             Set<String> rst = jedisGetByName(name);
 
-            for (String row : rst) {
-                System.out.println(row);
-            }
+            prettyPrint(rst);
 
         }catch (Exception e) {
             System.out.println("An error occured...");
@@ -132,9 +130,15 @@ public class RedisTrustedClient {
 
             if (checkIntegrity(uncheckedRow)){
                 try {
-                    String row = decryptRow(uncheckedRow);
+                    //split to remove integrity field
+                    String [] splitted = uncheckedRow.split("\\:");
+
+                    String row = decryptRow(splitted[0]);
                     rst.add(row);
-                }catch (Exception e){}
+                }catch (Exception e){
+                    System.out.println("An error occurred while decrypting row...");
+                    //e.printStackTrace();
+                }
             }
         }
         return rst;
@@ -160,5 +164,16 @@ public class RedisTrustedClient {
 
     private static String decryptRow (String row) throws DecoderException, BadPaddingException, IllegalBlockSizeException {
         return new String(cipher.doFinal(Hex.decodeHex(row)));
+    }
+
+    private static void prettyPrint (Set<String> rows) {
+
+        System.out.println("-----------------------------------------------------");
+        System.out.println("|    FirstName    |    LastName    |      Salary    |");
+        System.out.println("-----------------------------------------------------");
+
+        for (String row: rows){
+            System.out.println(row);
+        }
     }
 }
