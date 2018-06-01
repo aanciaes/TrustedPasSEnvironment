@@ -3,9 +3,10 @@ package unl.fct.srsc;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import redis.clients.jedis.Jedis;
+import unl.fct.srsc.config.SecurityConfig;
+import unl.fct.srsc.config.Utils;
 
 import javax.crypto.*;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -15,12 +16,10 @@ import java.util.Set;
 
 public class RedisTrustedClient {
 
+    private static SecurityConfig securityConfig;
     private static Jedis cli = null;
     private static Key keySecret = null;
     private static Cipher cipher = null;
-
-    private static final int COLUMN_NUMBER = 3;
-
 
     public static void main(String[] args) {
         try {
@@ -50,10 +49,11 @@ public class RedisTrustedClient {
         String redisServer = System.getenv("REDIS_SERVER");
         System.out.println("REDIS_SERVER: " + redisServer != null ? redisServer : "localhost");
 
+        securityConfig = Utils.readFromConfig();
         cli = new Jedis(redisServer, 6379);
-        cipher = Cipher.getInstance("blowfish/ECB/PKCS5Padding", "SunJCE");
+        cipher = Cipher.getInstance(securityConfig.getCiphersuite(), securityConfig.getProvider());
 
-        keySecret = new SecretKeySpec("Passwords".getBytes(), "blowfish");
+        keySecret = Utils.getKeyFromKeyStore(securityConfig);
     }
 
     private static void processInsert(BufferedReader br) throws IOException {
@@ -81,7 +81,7 @@ public class RedisTrustedClient {
 
             prettyPrint(rst);
 
-        }catch (Exception e) {
+        } catch (Exception e) {
             System.out.println("An error occured...");
             e.printStackTrace();
         }
@@ -101,7 +101,7 @@ public class RedisTrustedClient {
 
             row = Hex.encodeHexString(ecryptedCore);
 
-            Mac hMac = Mac.getInstance("HMacSHA1", "SunJCE");
+            Mac hMac = Mac.getInstance(securityConfig.getHmac(), securityConfig.getProvider());
             hMac.init(keySecret);
             String mac = Hex.encodeHexString(hMac.doFinal(row.getBytes()));
 
@@ -112,6 +112,7 @@ public class RedisTrustedClient {
 
             return true;
         } catch (Exception e) {
+            e.printStackTrace();
             return false;
         }
     }
@@ -128,14 +129,14 @@ public class RedisTrustedClient {
         for (String id : indexes) {
             String uncheckedRow = cli.get(id);
 
-            if (checkIntegrity(uncheckedRow)){
+            if (checkIntegrity(uncheckedRow)) {
                 try {
                     //split to remove integrity field
-                    String [] splitted = uncheckedRow.split("\\:");
+                    String[] splitted = uncheckedRow.split("\\:");
 
                     String row = decryptRow(splitted[0]);
                     rst.add(row);
-                }catch (Exception e){
+                } catch (Exception e) {
                     System.out.println("An error occurred while decrypting row...");
                     //e.printStackTrace();
                 }
@@ -144,11 +145,11 @@ public class RedisTrustedClient {
         return rst;
     }
 
-    private static boolean checkIntegrity (String row) throws DecoderException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException {
+    private static boolean checkIntegrity(String row) throws DecoderException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException {
 
         String[] columns = row.split("\\:");
 
-        Mac hMac = Mac.getInstance("HMacSHA1", "SunJCE");
+        Mac hMac = Mac.getInstance(securityConfig.getHmac(), securityConfig.getProvider());
         hMac.init(keySecret);
 
         byte[] integrity = Hex.decodeHex(columns[1]);
@@ -162,17 +163,17 @@ public class RedisTrustedClient {
         return true;
     }
 
-    private static String decryptRow (String row) throws DecoderException, BadPaddingException, IllegalBlockSizeException {
+    private static String decryptRow(String row) throws DecoderException, BadPaddingException, IllegalBlockSizeException {
         return new String(cipher.doFinal(Hex.decodeHex(row)));
     }
 
-    private static void prettyPrint (Set<String> rows) {
+    private static void prettyPrint(Set<String> rows) {
 
         System.out.println("-----------------------------------------------------");
         System.out.println("|    FirstName    |    LastName    |      Salary    |");
         System.out.println("-----------------------------------------------------");
 
-        for (String row: rows){
+        for (String row : rows) {
             System.out.println(row);
         }
     }
