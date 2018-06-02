@@ -24,3 +24,33 @@ Now, on the root directory of the project just build the image with:
 and run the client specifying the host IP on the REDIS_SERVER variable:
 
 ``docker run -it -e REDIS_SERVER=192.168.118.32 srsc``
+
+### Security Configurations
+
+Per default, the client will use the blowfish encryption algorithm with a 448 byte key.
+To personalize the security configurations follow the instructions bellow.
+
+1. Create a folder anywhere on your computer with the following structure:
+   
+              .
+              ├── ciphersuite.yml                   # Confguration file
+              └── keystore.jceks                    # Keystore containing keys              
+
+2. Run the client with the command:
+
+````docker run -it -v /path/to/config/folder:/home/project/configs -e REDIS_SERVER=192.168.118.32 srsc````
+
+##### Ciphersuite.yml structure:
+
+``` yaml
+# YAML
+config:
+  - ciphersuite: ciphersuite        # in algorithm/mode/padding format example: (blowfish/ECB/PKCS5Padding)
+    provider: SunJCE                # Security Provider
+    hmac: HMacSHA1                  # HMac Hashing algorithm
+    keyStoreType: JCEKS             # Keystore type
+    keyStoreName: keystore.jceks    # Keystore name
+    keyName: mykey                  # Key name
+    keyPassword: P4s5w0rd           # Key password
+    keyStorePassword: P4s5w0rd      # Keystore password
+```
