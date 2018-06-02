@@ -1,0 +1,12 @@
+config:
+
+  - ciphersuite: blowfish/ECB/PKCS5Padding
+    provider: SunJCE
+    hmac: HMacSHA1
+    keyStoreType: JCEKS
+    keyStoreName: securityStore.jceks
+    keyStorePassword: P4s5w0rd
+    keyName: symkey
+    keyPassword: P4s5w0rd
+    signatureKeyName: asymkey
+    signatureKeyPassword: P4s5w0rd

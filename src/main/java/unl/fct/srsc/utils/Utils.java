@@ -1,6 +1,8 @@
-package unl.fct.srsc.config;
+package unl.fct.srsc.utils;
 
 import org.yaml.snakeyaml.Yaml;
+import unl.fct.srsc.config.Configurations;
+import unl.fct.srsc.config.SecurityConfig;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -10,7 +12,7 @@ import java.security.cert.Certificate;
 
 public class Utils {
 
-    public static final String SECURITY_CONFIG_FILE = "cyphersuite.yml";
+    public static final String SECURITY_CONFIG_FILE = "ciphersuite.yml";
     public static final String SECURITY_CONFIG_LOCATION = "configs/";
 
     public static SecurityConfig readFromConfig() {
@@ -40,6 +42,27 @@ public class Utils {
             return keyStore.getKey(securityConfig.getKeyName(), securityConfig.getKeyPassword().toCharArray());
 
         } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static KeyPair getKeyPairFromKeyStore (SecurityConfig securityConfig) {
+        try {
+            KeyStore keyStore = KeyStore.getInstance(securityConfig.getKeyStoreType());
+            // Keystore where symmetric keys are stored (type JCEKS)
+            FileInputStream stream = new FileInputStream(SECURITY_CONFIG_LOCATION + securityConfig.getKeyStoreName());
+            keyStore.load(stream, securityConfig.getKeyStorePassword().toCharArray());
+
+            PrivateKey privateKey = (PrivateKey) keyStore.getKey(securityConfig.getSignatureKeyName(),
+                    securityConfig.getSignatureKeyPassword().toCharArray());
+
+            final Certificate cert = keyStore.getCertificate(securityConfig.getSignatureKeyName());
+            final PublicKey publicKey = cert.getPublicKey();
+
+            return new KeyPair(publicKey, privateKey);
+
+        }catch (Exception e) {
             e.printStackTrace();
             return null;
         }

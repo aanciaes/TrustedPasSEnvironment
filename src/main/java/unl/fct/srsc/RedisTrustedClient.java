@@ -4,7 +4,7 @@ import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import redis.clients.jedis.Jedis;
 import unl.fct.srsc.config.SecurityConfig;
-import unl.fct.srsc.config.Utils;
+import unl.fct.srsc.utils.Utils;
 
 import javax.crypto.*;
 import java.io.BufferedReader;
@@ -18,7 +18,10 @@ public class RedisTrustedClient {
 
     private static SecurityConfig securityConfig;
     private static Jedis cli = null;
+
     private static Key keySecret = null;
+    private static KeyPair keyPair = null;
+
     private static Cipher cipher = null;
 
     public static void main(String[] args) {
@@ -54,6 +57,7 @@ public class RedisTrustedClient {
         cipher = Cipher.getInstance(securityConfig.getCiphersuite(), securityConfig.getProvider());
 
         keySecret = Utils.getKeyFromKeyStore(securityConfig);
+        keyPair = Utils.getKeyPairFromKeyStore(securityConfig);
     }
 
     private static void processInsert(BufferedReader br) throws IOException {

@@ -50,7 +50,9 @@ config:
     hmac: HMacSHA1                  # HMac Hashing algorithm
     keyStoreType: JCEKS             # Keystore type
     keyStoreName: keystore.jceks    # Keystore name
-    keyName: mykey                  # Key name
+    keyName: symkey                 # Key name
     keyPassword: P4s5w0rd           # Key password
     keyStorePassword: P4s5w0rd      # Keystore password
+    signatureKeyName: asymkey       # Asymetric key pair alias
+    signatureKeyPassword: P4s5w0rd  # Asymetric key pair password
 ```

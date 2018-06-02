@@ -10,11 +10,13 @@ public class SecurityConfig {
     private String keyName;
     private String keyPassword;
     private String keyStorePassword;
+    private String signatureKeyName;
+    private String SignatureKeyPassword;
 
     public SecurityConfig() {
     }
 
-    public SecurityConfig(String ciphersuite, String provider, String hmac, String keyStoreType, String keyStoreName, String keyName, String keyPassword, String keyStorePassword) {
+    public SecurityConfig(String ciphersuite, String provider, String hmac, String keyStoreType, String keyStoreName, String keyName, String keyPassword, String keyStorePassword, String signatureKeyName, String signatureKeyPassword) {
         this.ciphersuite = ciphersuite;
         this.provider = provider;
         this.hmac = hmac;
@@ -23,6 +25,8 @@ public class SecurityConfig {
         this.keyName = keyName;
         this.keyPassword = keyPassword;
         this.keyStorePassword = keyStorePassword;
+        this.signatureKeyName = signatureKeyName;
+        SignatureKeyPassword = signatureKeyPassword;
     }
 
     public String getCiphersuite() {
@@ -88,5 +92,20 @@ public class SecurityConfig {
     public void setKeyStorePassword(String keyStorePassword) {
         this.keyStorePassword = keyStorePassword;
     }
-}
 
+    public String getSignatureKeyName() {
+        return signatureKeyName;
+    }
+
+    public void setSignatureKeyName(String signatureKeyName) {
+        this.signatureKeyName = signatureKeyName;
+    }
+
+    public String getSignatureKeyPassword() {
+        return SignatureKeyPassword;
+    }
+
+    public void setSignatureKeyPassword(String signatureKeyPassword) {
+        SignatureKeyPassword = signatureKeyPassword;
+    }
+}
