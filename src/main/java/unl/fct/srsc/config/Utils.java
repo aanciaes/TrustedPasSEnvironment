@@ -5,8 +5,8 @@ import org.yaml.snakeyaml.Yaml;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.security.Key;
-import java.security.KeyStore;
+import java.security.*;
+import java.security.cert.Certificate;
 
 public class Utils {
 
@@ -43,5 +43,102 @@ public class Utils {
             e.printStackTrace();
             return null;
         }
+    }
+
+   /* public static KeyPair getKeyFromKeyStoreTest() {
+
+        try {
+            KeyStore keyStore = KeyStore.getInstance("JKS");
+            // Keystore where symmetric keys are stored (type JCEKS)
+            FileInputStream stream = new FileInputStream("/Users/miguel/Desktop/opkeystore.jks");
+            keyStore.load(stream, "qwerty".toCharArray());
+
+            PrivateKey privateKey = (PrivateKey) keyStore.getKey("mydomain", ("qwerty").toCharArray());
+
+            final Certificate cert = keyStore.getCertificate("mydomain");
+            final PublicKey publicKey = cert.getPublicKey();
+
+            return new KeyPair(publicKey, privateKey);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }*/
+
+    private static class FixedRand extends SecureRandom {
+        MessageDigest sha;
+        byte[] state;
+
+        FixedRand() {
+            try {
+                this.sha = MessageDigest.getInstance("SHA-512");
+                this.state = sha.digest();
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException("Nao existe suporte SHA-512!");
+            }
+        }
+
+        public void nextBytes(
+                byte[] bytes) {
+            int off = 0;
+
+            sha.update(state);
+
+            while (off < bytes.length) {
+                state = sha.digest();
+
+                if (bytes.length - off > state.length) {
+                    System.arraycopy(state, 0, bytes, off, state.length);
+                } else {
+                    System.arraycopy(state, 0, bytes, off, bytes.length - off);
+                }
+
+                off += state.length;
+
+                sha.update(state);
+            }
+        }
+    }
+
+    /**
+     * Retorna um SecureRandom de teste com o mesmo valor...
+     *
+     * @return random fixo
+     */
+    public static SecureRandom createFixedRandom() {
+        return new FixedRand();
+    }
+
+    public void test() {
+        /*KeyPair keyPair = Utils.getKeyFromKeyStoreTest();
+        Signature           signature = Signature.getInstance("SHA512withRSA", "SunRsaSign");
+
+        // gerer objecto  signature
+        signature.initSign(keyPair.getPrivate(), Utils.createFixedRandom());
+
+        byte[] message = new byte[] { (byte)'a', (byte)'b', (byte)'c' , (byte) 125 };
+
+        signature.update(message);
+
+        byte[]  sigBytes = signature.sign();
+
+        // Verificar - neste caso estamos a obter a chave publica do par mas
+        // em geral usamos a chave publica que previamente conhecemos de
+        // quem assinou.
+        //
+        signature.initVerify(keyPair.getPublic());
+
+        signature.update(message);
+
+        if (signature.verify(sigBytes))
+        {
+            System.out.println("Assinatura validada - reconhecida");
+        }
+        else
+        {
+            System.out.println("Assinatura nao reconhecida");
+        }
+*/
     }
 }
