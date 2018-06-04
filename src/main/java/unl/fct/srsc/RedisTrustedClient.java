@@ -94,6 +94,7 @@ public class RedisTrustedClient {
     private static boolean jedisInsert(String name, String lastName, String salary) {
 
         String row = String.format("%s:%s:%s", name, lastName, salary);
+        row = signRow(row);
 
         try {
             cipher.init(Cipher.ENCRYPT_MODE, keySecret);
@@ -121,6 +122,25 @@ public class RedisTrustedClient {
         }
     }
 
+    private static String signRow (String row) {
+
+        try {
+            Signature signature = Signature.getInstance(securityConfig.getSignatureAlgorithm(),
+                    securityConfig.getSignatureAlgProvider());
+
+            signature.initSign(keyPair.getPrivate(), Utils.createFixedRandom());
+
+            signature.update(row.getBytes());
+            byte[] sigBytes = signature.sign();
+
+            return String.format("%s:%s", row, Hex.encodeHexString(sigBytes));
+
+        }catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     private static Set<String> jedisGetByName(String name) throws InvalidKeyException, DecoderException, BadPaddingException, IllegalBlockSizeException, NoSuchProviderException, NoSuchAlgorithmException {
         Set<String> rst = new HashSet();
 
@@ -139,7 +159,8 @@ public class RedisTrustedClient {
                     String[] splitted = uncheckedRow.split("\\:");
 
                     String row = decryptRow(splitted[0]);
-                    rst.add(row);
+                    String authenticRow = checkAuthenticity(row);
+                    rst.add(authenticRow);
                 } catch (Exception e) {
                     System.out.println("An error occurred while decrypting row...");
                     //e.printStackTrace();
@@ -165,6 +186,34 @@ public class RedisTrustedClient {
 
         System.out.println("Integrity OK");
         return true;
+    }
+
+    private static String checkAuthenticity (String row) {
+        String [] splitted = row.split("\\:");
+
+        //TODO: make it better
+        String realRow = String.format("%s:%s:%s", splitted[0], splitted[1], splitted[2]);
+        String signatureField = splitted[3];
+
+        try {
+            Signature signature = Signature.getInstance(securityConfig.getSignatureAlgorithm(),
+                    securityConfig.getSignatureAlgProvider());
+
+            signature.initVerify(keyPair.getPublic());
+
+            signature.update(realRow.getBytes());
+
+            if (signature.verify(Hex.decodeHex(signatureField))) {
+                System.out.println("Assinatura validada - reconhecida");
+                return realRow;
+            } else {
+                System.out.println("Assinatura nao reconhecida");
+            }
+
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     private static String decryptRow(String row) throws DecoderException, BadPaddingException, IllegalBlockSizeException {

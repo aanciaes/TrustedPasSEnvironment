@@ -8,5 +8,7 @@ config:
     keyStorePassword: P4s5w0rd
     keyName: symkey
     keyPassword: P4s5w0rd
+    signatureAlgorithm: SHA512withRSA
+    signatureAlgProvider: SunRsaSign
     signatureKeyName: asymkey
     signatureKeyPassword: P4s5w0rd
