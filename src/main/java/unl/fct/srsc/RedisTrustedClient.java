@@ -26,6 +26,7 @@ public class RedisTrustedClient {
 
     public static void main(String[] args) {
         try {
+
             setup();
 
             BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -50,7 +51,9 @@ public class RedisTrustedClient {
 
     private static void setup() throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException {
         String redisServer = System.getenv("REDIS_SERVER");
-        System.out.println("REDIS_SERVER: " + redisServer != null ? redisServer : "localhost");
+        redisServer = redisServer == null ? "localhost" : redisServer;
+
+        System.out.println("REDIS_SERVER: " +  redisServer);
 
         securityConfig = Utils.readFromConfig();
         cli = new Jedis(redisServer, 6379);
