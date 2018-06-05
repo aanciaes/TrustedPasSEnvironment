@@ -3,6 +3,7 @@ package unl.fct.srsc;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.exceptions.JedisConnectionException;
 import unl.fct.srsc.config.SecurityConfig;
 import unl.fct.srsc.utils.Utils;
 
@@ -10,6 +11,8 @@ import javax.crypto.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.UnknownHostException;
+
 import java.security.*;
 import java.util.HashSet;
 import java.util.Set;
@@ -43,7 +46,11 @@ public class RedisTrustedClient {
             }
 
             System.out.println("Bye");
-        } catch (Exception e) {
+        } catch (JedisConnectionException uh){
+            System.out.println("REDIS_SERVER didn't respond.");
+
+        } catch (Exception e){
+
             e.printStackTrace();
         }
     }
@@ -53,10 +60,13 @@ public class RedisTrustedClient {
         String redisServer = System.getenv("REDIS_SERVER");
         redisServer = redisServer == null ? "localhost" : redisServer;
 
+        securityConfig = Utils.readFromConfig();
+
+        cli = new Jedis(redisServer, 6379);
+        cli.ping();
+
         System.out.println("REDIS_SERVER: " +  redisServer);
 
-        securityConfig = Utils.readFromConfig();
-        cli = new Jedis(redisServer, 6379);
         cipher = Cipher.getInstance(securityConfig.getCiphersuite(), securityConfig.getProvider());
 
         keySecret = Utils.getKeyFromKeyStore(securityConfig);
