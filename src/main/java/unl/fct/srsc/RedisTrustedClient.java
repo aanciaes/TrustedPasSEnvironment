@@ -11,13 +11,14 @@ import javax.crypto.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.UnknownHostException;
-
 import java.security.*;
 import java.util.HashSet;
 import java.util.Set;
 
 public class RedisTrustedClient {
+
+    private static final String REDIS_SERVER = "REDIS_SERVER";
+    private static final String LOCALHOST = "localhost";
 
     private static SecurityConfig securityConfig;
     private static Jedis cli = null;
@@ -46,26 +47,26 @@ public class RedisTrustedClient {
             }
 
             System.out.println("Bye");
-        } catch (JedisConnectionException uh){
+        } catch (JedisConnectionException uh) {
             System.out.println("REDIS_SERVER didn't respond.");
-
-        } catch (Exception e){
-
+            System.exit(1);
+        } catch (Exception e) {
             e.printStackTrace();
+            System.exit(1);
         }
     }
 
 
     private static void setup() throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException {
-        String redisServer = System.getenv("REDIS_SERVER");
-        redisServer = redisServer == null ? "localhost" : redisServer;
+        String redisServer = System.getenv(REDIS_SERVER);
+        redisServer = redisServer == null ? LOCALHOST : redisServer;
 
         securityConfig = Utils.readFromConfig();
 
         cli = new Jedis(redisServer, 6379);
-        cli.ping();
+        cli.ping(); //pinging database
 
-        System.out.println("REDIS_SERVER: " +  redisServer);
+        System.out.println(REDIS_SERVER + " : " + redisServer);
 
         cipher = Cipher.getInstance(securityConfig.getCiphersuite(), securityConfig.getProvider());
 
@@ -135,7 +136,7 @@ public class RedisTrustedClient {
         }
     }
 
-    private static String signRow (String row) {
+    private static String signRow(String row) {
 
         try {
             Signature signature = Signature.getInstance(securityConfig.getSignatureAlgorithm(),
@@ -148,7 +149,7 @@ public class RedisTrustedClient {
 
             return String.format("%s:%s", row, Hex.encodeHexString(sigBytes));
 
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
@@ -201,8 +202,8 @@ public class RedisTrustedClient {
         return true;
     }
 
-    private static String checkAuthenticity (String row) {
-        String [] splitted = row.split("\\:");
+    private static String checkAuthenticity(String row) {
+        String[] splitted = row.split("\\:");
 
         //TODO: make it better
         String realRow = String.format("%s:%s:%s", splitted[0], splitted[1], splitted[2]);
@@ -223,7 +224,7 @@ public class RedisTrustedClient {
                 System.out.println("Assinatura nao reconhecida");
             }
 
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
