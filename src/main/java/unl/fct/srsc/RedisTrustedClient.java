@@ -44,6 +44,9 @@ public class RedisTrustedClient {
                 if (command.equals("get")) {
                     processGetByName(br);
                 }
+                if(command.equals("populate")){
+                    processPopulate(br);
+                }
             }
 
             System.out.println("Bye");
@@ -177,7 +180,7 @@ public class RedisTrustedClient {
                     rst.add(authenticRow);
                 } catch (Exception e) {
                     System.out.println("An error occurred while decrypting row...");
-                    //e.printStackTrace();
+                    e.printStackTrace();
                 }
             }
         }
@@ -243,5 +246,34 @@ public class RedisTrustedClient {
         for (String row : rows) {
             System.out.println(row);
         }
+    }
+
+    private static void processPopulate(BufferedReader br) throws BadPaddingException {
+        System.out.println("Insert number of elements:");
+
+        String name = "Ricardo";
+        String apelido = "Amaral";
+        String value = "20000";
+
+
+
+        try {
+
+
+            int number = Integer.parseInt(br.readLine().trim());
+            long time = System.currentTimeMillis();
+            while(number > 0){
+                jedisInsert(name, apelido, value);
+
+                number--;
+            }
+
+            System.out.println( "time -> " + (System.currentTimeMillis() - time));
+
+            System.out.println("DOne");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 }
