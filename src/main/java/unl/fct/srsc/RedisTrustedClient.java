@@ -1,5 +1,6 @@
 package unl.fct.srsc;
 
+import com.github.javafaker.Faker;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import redis.clients.jedis.Jedis;
@@ -11,9 +12,9 @@ import javax.crypto.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigInteger;
 import java.security.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class RedisTrustedClient {
 
@@ -22,6 +23,8 @@ public class RedisTrustedClient {
 
     private static SecurityConfig securityConfig;
     private static Jedis cli = null;
+
+    private static Map<Integer, String> test = new HashMap<Integer, String>();
 
     private static Key keySecret = null;
     private static KeyPair keyPair = null;
@@ -46,6 +49,10 @@ public class RedisTrustedClient {
                 }
                 if(command.equals("populate")){
                     processPopulate(br);
+                }
+
+                if(command.equals("getAll")){
+                    printAllEntries();
                 }
             }
 
@@ -131,6 +138,7 @@ public class RedisTrustedClient {
 
             cli.set(key, rowIntegrity);
             cli.sadd(String.valueOf(name.hashCode()), key);
+            test.put(name.hashCode(), key);
 
             return true;
         } catch (Exception e) {
@@ -161,7 +169,8 @@ public class RedisTrustedClient {
     private static Set<String> jedisGetByName(String name) throws InvalidKeyException, DecoderException, BadPaddingException, IllegalBlockSizeException, NoSuchProviderException, NoSuchAlgorithmException {
         Set<String> rst = new HashSet();
 
-        String key = String.valueOf(name.hashCode());
+        //String key = String.valueOf(name.hashCode());
+        String key = name;
         Set<String> indexes = cli.smembers(key);
         System.out.println("Number of entries: " + indexes.size());
 
@@ -251,19 +260,21 @@ public class RedisTrustedClient {
     private static void processPopulate(BufferedReader br) throws BadPaddingException {
         System.out.println("Insert number of elements:");
 
-        String name = "Ricardo";
-        String apelido = "Amaral";
-        String value = "20000";
-
-
+        Faker faker = new Faker();
 
         try {
-
 
             int number = Integer.parseInt(br.readLine().trim());
             long time = System.currentTimeMillis();
             while(number > 0){
-                jedisInsert(name, apelido, value);
+
+                String firstName = faker.name().firstName();
+                String lastName = faker.name().lastName();
+                Random rand = new Random();
+                int integerValue = rand.nextInt(200000);
+                String value = String.valueOf(integerValue);
+
+                jedisInsert(firstName, lastName, value);
 
                 number--;
             }
@@ -274,6 +285,32 @@ public class RedisTrustedClient {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+    }
+
+    private static void printAllEntries() {
+
+      for(Integer line: test.keySet()){
+
+          try {
+
+              Set<String> out = jedisGetByName(String.valueOf(line));
+              prettyPrint(out);
+
+          } catch (InvalidKeyException e) {
+              e.printStackTrace();
+          } catch (DecoderException e) {
+              e.printStackTrace();
+          } catch (BadPaddingException e) {
+              e.printStackTrace();
+          } catch (IllegalBlockSizeException e) {
+              e.printStackTrace();
+          } catch (NoSuchProviderException e) {
+              e.printStackTrace();
+          } catch (NoSuchAlgorithmException e) {
+              e.printStackTrace();
+          }
+      }
 
     }
 }
