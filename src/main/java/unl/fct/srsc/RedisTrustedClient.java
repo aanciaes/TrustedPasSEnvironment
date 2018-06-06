@@ -12,7 +12,6 @@ import javax.crypto.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.math.BigInteger;
 import java.security.*;
 import java.util.*;
 
@@ -24,7 +23,7 @@ public class RedisTrustedClient {
     private static SecurityConfig securityConfig;
     private static Jedis cli = null;
 
-    private static Map<Integer, String> test = new HashMap<Integer, String>();
+    private static Set<String> test = new HashSet<String>();
 
     private static Key keySecret = null;
     private static KeyPair keyPair = null;
@@ -138,7 +137,8 @@ public class RedisTrustedClient {
 
             cli.set(key, rowIntegrity);
             cli.sadd(String.valueOf(name.hashCode()), key);
-            test.put(name.hashCode(), key);
+
+            test.add(String.valueOf(name.hashCode()));
 
             return true;
         } catch (Exception e) {
@@ -169,8 +169,8 @@ public class RedisTrustedClient {
     private static Set<String> jedisGetByName(String name) throws InvalidKeyException, DecoderException, BadPaddingException, IllegalBlockSizeException, NoSuchProviderException, NoSuchAlgorithmException {
         Set<String> rst = new HashSet();
 
-        //String key = String.valueOf(name.hashCode());
-        String key = name;
+        String key = String.valueOf(name.hashCode());
+
         Set<String> indexes = cli.smembers(key);
         System.out.println("Number of entries: " + indexes.size());
 
@@ -279,7 +279,7 @@ public class RedisTrustedClient {
                 number--;
             }
 
-            System.out.println( "time -> " + (System.currentTimeMillis() - time));
+            System.out.println( "time -> " + (System.currentTimeMillis() - time) + "ms");
 
             System.out.println("DOne");
         } catch (IOException e) {
@@ -290,27 +290,62 @@ public class RedisTrustedClient {
 
     private static void printAllEntries() {
 
-      for(Integer line: test.keySet()){
+        long getTime = 0;
+        try {
+            getTime = getAll();
 
-          try {
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
 
-              Set<String> out = jedisGetByName(String.valueOf(line));
-              prettyPrint(out);
+        } catch (DecoderException e) {
+            e.printStackTrace();
 
-          } catch (InvalidKeyException e) {
-              e.printStackTrace();
-          } catch (DecoderException e) {
-              e.printStackTrace();
-          } catch (BadPaddingException e) {
-              e.printStackTrace();
-          } catch (IllegalBlockSizeException e) {
-              e.printStackTrace();
-          } catch (NoSuchProviderException e) {
-              e.printStackTrace();
-          } catch (NoSuchAlgorithmException e) {
-              e.printStackTrace();
-          }
-      }
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Total get Time -> " + getTime + "ms");
 
     }
+        private static long getAll() throws InvalidKeyException, DecoderException, BadPaddingException, IllegalBlockSizeException, NoSuchProviderException, NoSuchAlgorithmException {
+
+            System.out.println("Number of entries: " + test.size());
+
+            cipher.init(Cipher.DECRYPT_MODE, keySecret);
+
+            long startTime = System.currentTimeMillis();
+
+            for (String id : test) {
+
+                Set<String> list = cli.smembers(id);
+
+                for (String innerId : list) {
+
+                    String uncheckedRow = cli.get(innerId);
+
+                    if (checkIntegrity(uncheckedRow)) {
+                        try {
+                            //split to remove integrity field
+                            String[] splitted = uncheckedRow.split("\\:");
+
+                            String row = decryptRow(splitted[0]);
+                            String authenticRow = checkAuthenticity(row);
+
+                        } catch (Exception e) {
+                            System.out.println("An error occurred while decrypting row...");
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+            return System.currentTimeMillis() - startTime;
+        }
 }
