@@ -44,8 +44,8 @@ To personalize the security configurations follow the instructions bellow.
 
 ``` yaml
 # YAML
-config:
-  - ciphersuite: ciphersuite            # in algorithm/mode/padding format example: (blowfish/ECB/PKCS5Padding)
+securityConfig:
+    ciphersuite: ciphersuite            # in algorithm/mode/padding format example: (blowfish/ECB/PKCS5Padding)
     provider: SunJCE                    # Security Provider
     hmac: HMacSHA1                      # HMac Hashing algorithm
     keyStoreType: JCEKS                 # Keystore type
@@ -57,4 +57,10 @@ config:
     signatureAlgProvider: SunRsaSign    # Provider of the digital signature algorithm
     signatureKeyName: asymkey           # Asymetric key pair alias
     signatureKeyPassword: P4s5w0rd      # Asymetric key pair password
+    
+tls:
+  vmsHost: localhost                    # VMS module SSL server host
+  vmsPort: 9999                         # VMS module SSL server port
+  gosHost: locahost                     # GOS module SSL server host
+  gosPort: 8888                         # GOS module SSL server port
 ```

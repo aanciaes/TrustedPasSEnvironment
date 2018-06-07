@@ -5,7 +5,9 @@ import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisConnectionException;
+import unl.fct.srsc.client.config.Configurations;
 import unl.fct.srsc.client.config.SecurityConfig;
+import unl.fct.srsc.client.config.TlsConfiguration;
 import unl.fct.srsc.client.utils.Utils;
 
 import javax.crypto.*;
@@ -21,6 +23,7 @@ public class RedisTrustedClient {
     private static final String LOCALHOST = "localhost";
 
     private static SecurityConfig securityConfig;
+    private static TlsConfiguration tlsConfiguration;
     private static Jedis cli = null;
 
     private static Set<String> test = new HashSet<String>();
@@ -70,7 +73,9 @@ public class RedisTrustedClient {
         String redisServer = System.getenv(REDIS_SERVER);
         redisServer = redisServer == null ? LOCALHOST : redisServer;
 
-        securityConfig = Utils.readFromConfig();
+        Configurations confs = Utils.readFromConfig();
+        securityConfig = confs.getSecurityConfig();
+        tlsConfiguration = confs.getTls();
 
         cli = new Jedis(redisServer, 6379);
         cli.ping(); //pinging database

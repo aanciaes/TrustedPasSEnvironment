@@ -18,7 +18,7 @@ public class Utils {
     public static final String SECURITY_CONFIG_FILE = "ciphersuite.yml";
     public static final String SECURITY_CONFIG_LOCATION = "configs/client/";
 
-    public static SecurityConfig readFromConfig() {
+    public static Configurations readFromConfig() {
         Constructor constructor = new Constructor(Configurations.class);
         TypeDescription configDescription = new TypeDescription(Configurations.class);
 
@@ -33,7 +33,7 @@ public class Utils {
             InputStream in = new FileInputStream(f);
             Configurations configs = yaml.loadAs(in, Configurations.class);
 
-            return configs.getSecurityConfig();
+            return configs;
 
         } catch (Exception e) {
             e.printStackTrace();
