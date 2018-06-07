@@ -16,7 +16,7 @@ import java.security.cert.Certificate;
 public class Utils {
 
     public static final String SECURITY_CONFIG_FILE = "ciphersuite.yml";
-    public static final String SECURITY_CONFIG_LOCATION = "configs/";
+    public static final String SECURITY_CONFIG_LOCATION = "configs/client/";
 
     public static SecurityConfig readFromConfig() {
         Constructor constructor = new Constructor(Configurations.class);

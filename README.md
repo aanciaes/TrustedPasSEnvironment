@@ -38,7 +38,7 @@ To personalize the security configurations follow the instructions bellow.
 
 2. Run the client with the command:
 
-````docker run -it -v /path/to/config/folder:/home/project/configs -e REDIS_SERVER=192.168.118.32 srsc````
+````docker run -it -v /path/to/config/folder:/home/project/configs/client -e REDIS_SERVER=192.168.118.32 srsc````
 
 ##### Ciphersuite.yml structure:
 
