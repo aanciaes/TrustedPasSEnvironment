@@ -27,7 +27,7 @@ public class TpmTLSServer {
             s.setEnabledProtocols(confprotocols);
             s.setEnabledCipherSuites(confciphersuites);
 
-            System.out.println(Arrays.asList(s.getEnabledCipherSuites()));
+            System.out.println("TLS server ready to accept connections...");
 
             SSLSocket c = (SSLSocket) s.accept();
 
