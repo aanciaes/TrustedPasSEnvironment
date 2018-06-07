@@ -12,7 +12,7 @@ securityConfig:
   signatureKeyName: asymkey
   signatureKeyPassword: P4s5w0rd
 
-tls:
+tpmHosts:
   vmsHost: localhost
   vmsPort: 9999
   gosHost: locahost

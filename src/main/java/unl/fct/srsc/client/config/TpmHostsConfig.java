@@ -1,6 +1,6 @@
 package unl.fct.srsc.client.config;
 
-public class TlsConfiguration {
+public class TpmHostsConfig {
 
     private String vmsHost;
     private String vmsPort;
@@ -8,11 +8,11 @@ public class TlsConfiguration {
     private String gosHost;
     private String gosPort;
 
-    public TlsConfiguration () {
+    public TpmHostsConfig() {
 
     }
 
-    public TlsConfiguration(String vmsHost, String vmsPort, String gosHost, String gosPort) {
+    public TpmHostsConfig(String vmsHost, String vmsPort, String gosHost, String gosPort) {
         this.vmsHost = vmsHost;
         this.vmsPort = vmsPort;
         this.gosHost = gosHost;

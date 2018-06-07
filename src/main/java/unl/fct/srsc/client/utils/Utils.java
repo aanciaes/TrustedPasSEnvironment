@@ -5,7 +5,7 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import unl.fct.srsc.client.config.Configurations;
 import unl.fct.srsc.client.config.SecurityConfig;
-import unl.fct.srsc.client.config.TlsConfiguration;
+import unl.fct.srsc.client.config.TpmHostsConfig;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,7 +23,7 @@ public class Utils {
         TypeDescription configDescription = new TypeDescription(Configurations.class);
 
         configDescription.addPropertyParameters("securityConfig", SecurityConfig.class);
-        configDescription.addPropertyParameters("tls", TlsConfiguration.class);
+        configDescription.addPropertyParameters("tpmHosts", TpmHostsConfig.class);
         constructor.addTypeDescription(configDescription);
 
         Yaml yaml = new Yaml(constructor);

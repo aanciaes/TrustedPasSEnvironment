@@ -1,18 +1,16 @@
 package unl.fct.srsc.client.config;
 
-import java.util.List;
-
 public class Configurations {
 
     private SecurityConfig securityConfig;
-    private TlsConfiguration tls;
+    private TpmHostsConfig tpmHosts;
 
     public Configurations() {
     }
 
-    public Configurations(SecurityConfig securityConfig, TlsConfiguration tls) {
+    public Configurations(SecurityConfig securityConfig, TpmHostsConfig tpmHosts) {
         this.securityConfig = securityConfig;
-        this.tls = tls;
+        this.tpmHosts = tpmHosts;
     }
 
     public SecurityConfig getSecurityConfig() {
@@ -23,11 +21,11 @@ public class Configurations {
         this.securityConfig = securityConfig;
     }
 
-    public TlsConfiguration getTls() {
-        return tls;
+    public TpmHostsConfig getTpmHosts() {
+        return tpmHosts;
     }
 
-    public void setTls(TlsConfiguration tls) {
-        this.tls = tls;
+    public void setTpmHosts(TpmHostsConfig tpmHosts) {
+        this.tpmHosts = tpmHosts;
     }
 }
