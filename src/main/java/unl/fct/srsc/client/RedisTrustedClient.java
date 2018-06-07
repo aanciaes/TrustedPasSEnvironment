@@ -1,12 +1,12 @@
-package unl.fct.srsc;
+package unl.fct.srsc.client;
 
 import com.github.javafaker.Faker;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisConnectionException;
-import unl.fct.srsc.config.SecurityConfig;
-import unl.fct.srsc.utils.Utils;
+import unl.fct.srsc.client.config.SecurityConfig;
+import unl.fct.srsc.client.utils.Utils;
 
 import javax.crypto.*;
 import java.io.BufferedReader;

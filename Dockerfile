@@ -21,4 +21,4 @@ ADD . /home/project
 WORKDIR /home/project
 
 CMD mvn clean install \
-   && mvn exec:java -Dexec.mainClass="unl.fct.srsc.RedisTrustedClient"
+   && mvn exec:java -Dexec.mainClass="unl.fct.srsc.client.RedisTrustedClient"

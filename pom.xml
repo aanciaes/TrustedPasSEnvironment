@@ -22,7 +22,7 @@
                 </execution>
             </executions>
             <configuration>
-                <mainClass>unl.fct.srsc.RedisTrustedClient</mainClass>
+                <mainClass>unl.fct.srsc.client.RedisTrustedClient</mainClass>
                 <addResourcesToClasspath>true</addResourcesToClasspath>
                 <includeProjectDependencies>true</includeProjectDependencies>
             </configuration>

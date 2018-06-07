@@ -1,8 +1,8 @@
-package unl.fct.srsc.utils;
+package unl.fct.srsc.client.utils;
 
 import org.yaml.snakeyaml.Yaml;
-import unl.fct.srsc.config.Configurations;
-import unl.fct.srsc.config.SecurityConfig;
+import unl.fct.srsc.client.config.Configurations;
+import unl.fct.srsc.client.config.SecurityConfig;
 
 import java.io.File;
 import java.io.FileInputStream;

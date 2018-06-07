@@ -1,4 +1,4 @@
-package unl.fct.srsc.config;
+package unl.fct.srsc.client.config;
 
 import java.util.List;
 
