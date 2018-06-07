@@ -4,27 +4,30 @@ import java.util.List;
 
 public class Configurations {
 
-    private List<SecurityConfig> config;
+    private SecurityConfig securityConfig;
+    private TlsConfiguration tls;
 
     public Configurations() {
     }
 
-    public Configurations(List<SecurityConfig> config) {
-        this.config = config;
+    public Configurations(SecurityConfig securityConfig, TlsConfiguration tls) {
+        this.securityConfig = securityConfig;
+        this.tls = tls;
     }
 
-    public void setConfig(List<SecurityConfig> config) {
-        this.config = config;
+    public SecurityConfig getSecurityConfig() {
+        return securityConfig;
     }
 
-    public List<SecurityConfig> getConfig() {
-        return this.config;
+    public void setSecurityConfig(SecurityConfig securityConfig) {
+        this.securityConfig = securityConfig;
     }
 
-    public SecurityConfig getChatRoomConfig() {
-        for (SecurityConfig crc : config) {
-            return crc;
-        }
-        return null;
+    public TlsConfiguration getTls() {
+        return tls;
+    }
+
+    public void setTls(TlsConfiguration tls) {
+        this.tls = tls;
     }
 }
