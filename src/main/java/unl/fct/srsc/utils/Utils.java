@@ -132,36 +132,4 @@ public class Utils {
     public static SecureRandom createFixedRandom() {
         return new FixedRand();
     }
-
-    public void test() {
-        /*KeyPair keyPair = Utils.getKeyFromKeyStoreTest();
-        Signature           signature = Signature.getInstance("SHA512withRSA", "SunRsaSign");
-
-        // gerer objecto  signature
-        signature.initSign(keyPair.getPrivate(), Utils.createFixedRandom());
-
-        byte[] message = new byte[] { (byte)'a', (byte)'b', (byte)'c' , (byte) 125 };
-
-        signature.update(message);
-
-        byte[]  sigBytes = signature.sign();
-
-        // Verificar - neste caso estamos a obter a chave publica do par mas
-        // em geral usamos a chave publica que previamente conhecemos de
-        // quem assinou.
-        //
-        signature.initVerify(keyPair.getPublic());
-
-        signature.update(message);
-
-        if (signature.verify(sigBytes))
-        {
-            System.out.println("Assinatura validada - reconhecida");
-        }
-        else
-        {
-            System.out.println("Assinatura nao reconhecida");
-        }
-*/
-    }
 }
