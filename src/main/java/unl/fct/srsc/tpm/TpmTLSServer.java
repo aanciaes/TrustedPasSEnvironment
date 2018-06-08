@@ -39,6 +39,10 @@ public class TpmTLSServer {
                     String m = "";
                     while ((m = r.readLine()) != null) {
                         System.out.println(m);
+                        String rst = "Hello From Server";
+                        w.write(rst, 0, rst.length());
+                        w.newLine();
+                        w.flush();
                     }
                 }
             } catch (Exception e) {

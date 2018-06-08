@@ -32,10 +32,13 @@ public class TpmConnector {
                     new OutputStreamWriter(c.getOutputStream()));
             BufferedReader r = new BufferedReader(
                     new InputStreamReader(c.getInputStream()));
-            String m = "Hello World";
+            String m = "Hello World from client";
             w.write(m, 0, m.length());
             w.newLine();
             w.flush();
+
+            String rst = r.readLine();
+            System.out.println("Response: " + rst);
             w.close();
             r.close();
             c.close();
