@@ -1,12 +1,22 @@
 package unl.fct.srsc.client.tpm;
 
+import unl.fct.srsc.client.config.TpmHostsConfig;
+
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 
 public class TpmConnector {
 
-    public static void main(String[] args) {
+    private String redisServer;
+    private TpmHostsConfig tpmHostsConfig;
+
+    public TpmConnector (String redisServer, TpmHostsConfig tpmHostsConfig) {
+        this.redisServer = redisServer;
+        this.tpmHostsConfig = tpmHostsConfig;
+    }
+
+    public boolean checkTpm () {
 
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         PrintStream out = System.out;
@@ -14,7 +24,7 @@ public class TpmConnector {
         SSLSocketFactory f =
                 (SSLSocketFactory) SSLSocketFactory.getDefault();
         try {
-            SSLSocket c = (SSLSocket) f.createSocket("localhost", 9999);
+            SSLSocket c = (SSLSocket) f.createSocket(redisServer, 9999);
 
 
             c.startHandshake();
@@ -29,9 +39,11 @@ public class TpmConnector {
             w.close();
             r.close();
             c.close();
+
+            return true;
         } catch (IOException e) {
             System.err.println(e.toString());
         }
+        return false;
     }
-
 }

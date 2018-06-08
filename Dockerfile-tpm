@@ -21,4 +21,5 @@ ADD . /home/project
 WORKDIR /home/project
 
 CMD mvn clean install \
-   && mvn exec:java -Dexec.mainClass="unl.fct.srsc.tpm.TpmTLSServer"
+   && java -cp .:target/TrustedPasS-1.0-jar-with-dependencies.jar \
+        unl.fct.srsc.tpm.TpmTLSServer

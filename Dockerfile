@@ -21,4 +21,6 @@ ADD . /home/project
 WORKDIR /home/project
 
 CMD mvn clean install \
-   && mvn exec:java -Dexec.mainClass="unl.fct.srsc.client.RedisTrustedClient"
+   && java -Djavax.net.ssl.trustStore=configs/client/clientTrustStore \
+        -cp .:target/TrustedPasS-1.0-jar-with-dependencies.jar \
+        unl.fct.srsc.client.RedisTrustedClient

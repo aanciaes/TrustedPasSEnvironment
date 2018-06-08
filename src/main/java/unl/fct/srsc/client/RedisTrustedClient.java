@@ -8,6 +8,7 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
 import unl.fct.srsc.client.config.Configurations;
 import unl.fct.srsc.client.config.SecurityConfig;
 import unl.fct.srsc.client.config.TpmHostsConfig;
+import unl.fct.srsc.client.tpm.TpmConnector;
 import unl.fct.srsc.client.utils.Utils;
 
 import javax.crypto.*;
@@ -35,26 +36,28 @@ public class RedisTrustedClient {
 
     public static void main(String[] args) {
         try {
-
             setup();
 
-            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-            String command = "";
+            if(checkTpm ()) {
 
-            while (!(command = br.readLine().trim()).equals("exit")) {
+                BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+                String command = "";
 
-                if (command.equals("insert")) {
-                    processInsert(br);
-                }
-                if (command.equals("get")) {
-                    processGetByName(br);
-                }
-                if(command.equals("populate")){
-                    processPopulate(br);
-                }
+                while (!(command = br.readLine().trim()).equals("exit")) {
 
-                if(command.equals("getAll")){
-                    printAllEntries();
+                    if (command.equals("insert")) {
+                        processInsert(br);
+                    }
+                    if (command.equals("get")) {
+                        processGetByName(br);
+                    }
+                    if (command.equals("populate")) {
+                        processPopulate(br);
+                    }
+
+                    if (command.equals("getAll")) {
+                        printAllEntries();
+                    }
                 }
             }
 
@@ -87,6 +90,16 @@ public class RedisTrustedClient {
 
         keySecret = Utils.getKeyFromKeyStore(securityConfig);
         keyPair = Utils.getKeyPairFromKeyStore(securityConfig);
+    }
+
+
+    private static boolean checkTpm () {
+        String redisServer = System.getenv(REDIS_SERVER);
+        redisServer = redisServer == null ? LOCALHOST : redisServer;
+
+        TpmConnector tpmConnector = new TpmConnector(redisServer, tpmHostsConfig);
+
+        return tpmConnector.checkTpm();
     }
 
     private static void processInsert(BufferedReader br) throws IOException {
