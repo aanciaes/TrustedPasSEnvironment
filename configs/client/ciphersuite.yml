@@ -18,4 +18,5 @@ tpmHosts:
   gosHost: locahost
   gosPort: 8888
   ciphersuite: aes/ECB/PKCS5Padding
+  keySize: 128
   provider: SunJCE

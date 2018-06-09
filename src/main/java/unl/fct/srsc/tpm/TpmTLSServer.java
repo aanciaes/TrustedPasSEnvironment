@@ -15,6 +15,9 @@ import java.util.Arrays;
 
 public class TpmTLSServer {
 
+    private static final String DIFFIE_HELLMAN = "DH";
+    private static final String PROVIDER = "SunJCE";
+
     private static final String REQUEST_CODE = "0x00";
     private static final String RESPONSE_CODE = "0x01";
     private static final int ATTESTATION_REQUEST = 0;
@@ -22,6 +25,7 @@ public class TpmTLSServer {
     private static final int ATTESTATION_NONCE = 2;
     private static final int ATTESTATION_CIPHERSUITE = 3;
     private static final int ATTESTATION_CIPHERSUITE_PROVIDER = 4;
+    private static final int ATTESTATION_CIPHERSUITE_KEYSIZE = 5;
 
     // Parametro para o gerador do Grupo de Cobertura de P
     private static BigInteger g512 = new BigInteger(
@@ -29,7 +33,7 @@ public class TpmTLSServer {
                     + "749199681ee5b212c9b96bfdcfa5b20cd5e3fd2044895d609cf9b"
                     + "410b7a0f12ca1cb9a428cc", 16);
     // Um grande numero primo P
-    private static BigInteger p512 = new BigInteger(
+    private static BigInteger p1024 = new BigInteger(
             "9494fec095f3b85ee286542b3836fc81a5dd0a0349b4c239dd387"
                     + "44d488cf8e31db8bcb7d33b41abb9e5a33cca9144b1cef332c94b"
                     + "f0573bf047a3aca98cdf3b"
@@ -95,23 +99,24 @@ public class TpmTLSServer {
                 String noncePlusOne = new BigInteger(rq[ATTESTATION_NONCE]).add(BigInteger.ONE).toString();
                 String ciphersuite = rq[ATTESTATION_CIPHERSUITE];
                 String provider = rq[ATTESTATION_CIPHERSUITE_PROVIDER];
+                int keySize = Integer.parseInt(rq[ATTESTATION_CIPHERSUITE_KEYSIZE]);
 
-                DHParameterSpec dhParams = new DHParameterSpec(p512, g512);
-                KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DH", "SunJCE");
+                DHParameterSpec dhParams = new DHParameterSpec(p1024, g512);
+                KeyPairGenerator keyGen = KeyPairGenerator.getInstance(DIFFIE_HELLMAN, PROVIDER);
                 keyGen.initialize(dhParams, new SecureRandom());
 
-                KeyAgreement keyAgree = KeyAgreement.getInstance("DH", "SunJCE");
+                KeyAgreement keyAgree = KeyAgreement.getInstance(DIFFIE_HELLMAN, PROVIDER);
                 KeyPair pair = keyGen.generateKeyPair();
                 keyAgree.init(pair.getPrivate());
 
                 BigInteger y = new BigInteger(rq[ATTESTATION_DH_PUB_N]);
-                PublicKey p = KeyFactory.getInstance("DH").generatePublic(new DHPublicKeySpec(y, p512, g512));
+                PublicKey p = KeyFactory.getInstance(DIFFIE_HELLMAN).generatePublic(new DHPublicKeySpec(y, p1024, g512));
 
                 keyAgree.doPhase(p, true);
 
                 byte [] agreedKey = keyAgree.generateSecret();
-                byte [] agreedCroppedKey = new byte[32];
-                System.arraycopy(agreedKey,0,agreedCroppedKey, 0, 32);
+                byte [] agreedCroppedKey = new byte[keySize/8];
+                System.arraycopy(agreedKey,0,agreedCroppedKey, 0, keySize/8);
                 System.out.println("Cropped key: " + Hex.encodeHexString(agreedCroppedKey));
 
                 String pubKey = ((DHPublicKey) pair.getPublic()).getY().toString();

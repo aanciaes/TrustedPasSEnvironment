@@ -9,18 +9,20 @@ public class TpmHostsConfig {
     private String gosPort;
 
     private String ciphersuite;
+    private String keySize;
     private String provider;
 
     public TpmHostsConfig() {
 
     }
 
-    public TpmHostsConfig(String vmsHost, String vmsPort, String gosHost, String gosPort, String ciphersuite, String provider) {
+    public TpmHostsConfig(String vmsHost, String vmsPort, String gosHost, String gosPort, String ciphersuite, String keySize, String provider) {
         this.vmsHost = vmsHost;
         this.vmsPort = vmsPort;
         this.gosHost = gosHost;
         this.gosPort = gosPort;
         this.ciphersuite = ciphersuite;
+        this.keySize = keySize;
         this.provider = provider;
     }
 
@@ -62,6 +64,14 @@ public class TpmHostsConfig {
 
     public void setCiphersuite(String ciphersuite) {
         this.ciphersuite = ciphersuite;
+    }
+
+    public String getKeySize() {
+        return keySize;
+    }
+
+    public void setKeySize(String keySize) {
+        this.keySize = keySize;
     }
 
     public String getProvider() {
