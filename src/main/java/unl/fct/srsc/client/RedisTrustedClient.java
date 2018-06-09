@@ -1,23 +1,33 @@
-package unl.fct.srsc;
+package unl.fct.srsc.client;
 
+import com.github.javafaker.Faker;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import redis.clients.jedis.Jedis;
-import unl.fct.srsc.config.SecurityConfig;
-import unl.fct.srsc.utils.Utils;
+import redis.clients.jedis.exceptions.JedisConnectionException;
+import unl.fct.srsc.client.config.Configurations;
+import unl.fct.srsc.client.config.SecurityConfig;
+import unl.fct.srsc.client.config.TpmHostsConfig;
+import unl.fct.srsc.client.tpm.TpmConnector;
+import unl.fct.srsc.client.utils.Utils;
 
 import javax.crypto.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.security.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class RedisTrustedClient {
 
+    private static final String REDIS_SERVER = "REDIS_SERVER";
+    private static final String LOCALHOST = "localhost";
+
     private static SecurityConfig securityConfig;
+    private static TpmHostsConfig tpmHostsConfig;
     private static Jedis cli = null;
+
+    private static Set<String> test = new HashSet<String>();
 
     private static Key keySecret = null;
     private static KeyPair keyPair = null;
@@ -28,36 +38,68 @@ public class RedisTrustedClient {
         try {
             setup();
 
-            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-            String command = "";
+            if(checkTpm ()) {
 
-            while (!(command = br.readLine().trim()).equals("exit")) {
+                BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+                String command = "";
 
-                if (command.equals("insert")) {
-                    processInsert(br);
-                }
-                if (command.equals("get")) {
-                    processGetByName(br);
+                while (!(command = br.readLine().trim()).equals("exit")) {
+
+                    if (command.equals("insert")) {
+                        processInsert(br);
+                    }
+                    if (command.equals("get")) {
+                        processGetByName(br);
+                    }
+                    if (command.equals("populate")) {
+                        processPopulate(br);
+                    }
+
+                    if (command.equals("getAll")) {
+                        printAllEntries();
+                    }
                 }
             }
 
             System.out.println("Bye");
+        } catch (JedisConnectionException uh) {
+            System.out.println("REDIS_SERVER didn't respond.");
+            System.exit(1);
         } catch (Exception e) {
             e.printStackTrace();
+            System.exit(1);
         }
     }
 
 
     private static void setup() throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException {
-        String redisServer = System.getenv("REDIS_SERVER");
-        System.out.println("REDIS_SERVER: " + redisServer != null ? redisServer : "localhost");
+        String redisServer = System.getenv(REDIS_SERVER);
+        redisServer = redisServer == null ? LOCALHOST : redisServer;
 
-        securityConfig = Utils.readFromConfig();
+        //Configurations
+        Configurations confs = Utils.readFromConfig();
+        securityConfig = confs.getSecurityConfig();
+        tpmHostsConfig = confs.getTpmHosts();
+
         cli = new Jedis(redisServer, 6379);
+        cli.ping(); //pinging database
+
+        System.out.println(REDIS_SERVER + " : " + redisServer);
+
         cipher = Cipher.getInstance(securityConfig.getCiphersuite(), securityConfig.getProvider());
 
         keySecret = Utils.getKeyFromKeyStore(securityConfig);
         keyPair = Utils.getKeyPairFromKeyStore(securityConfig);
+    }
+
+
+    private static boolean checkTpm () {
+        String redisServer = System.getenv(REDIS_SERVER);
+        redisServer = redisServer == null ? LOCALHOST : redisServer;
+
+        TpmConnector tpmConnector = new TpmConnector(redisServer, tpmHostsConfig);
+
+        return tpmConnector.checkTpm();
     }
 
     private static void processInsert(BufferedReader br) throws IOException {
@@ -115,6 +157,8 @@ public class RedisTrustedClient {
             cli.set(key, rowIntegrity);
             cli.sadd(String.valueOf(name.hashCode()), key);
 
+            test.add(String.valueOf(name.hashCode()));
+
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -122,7 +166,7 @@ public class RedisTrustedClient {
         }
     }
 
-    private static String signRow (String row) {
+    private static String signRow(String row) {
 
         try {
             Signature signature = Signature.getInstance(securityConfig.getSignatureAlgorithm(),
@@ -135,7 +179,7 @@ public class RedisTrustedClient {
 
             return String.format("%s:%s", row, Hex.encodeHexString(sigBytes));
 
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
@@ -145,6 +189,7 @@ public class RedisTrustedClient {
         Set<String> rst = new HashSet();
 
         String key = String.valueOf(name.hashCode());
+
         Set<String> indexes = cli.smembers(key);
         System.out.println("Number of entries: " + indexes.size());
 
@@ -163,7 +208,7 @@ public class RedisTrustedClient {
                     rst.add(authenticRow);
                 } catch (Exception e) {
                     System.out.println("An error occurred while decrypting row...");
-                    //e.printStackTrace();
+                    e.printStackTrace();
                 }
             }
         }
@@ -188,8 +233,8 @@ public class RedisTrustedClient {
         return true;
     }
 
-    private static String checkAuthenticity (String row) {
-        String [] splitted = row.split("\\:");
+    private static String checkAuthenticity(String row) {
+        String[] splitted = row.split("\\:");
 
         //TODO: make it better
         String realRow = String.format("%s:%s:%s", splitted[0], splitted[1], splitted[2]);
@@ -210,7 +255,7 @@ public class RedisTrustedClient {
                 System.out.println("Assinatura nao reconhecida");
             }
 
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
@@ -230,4 +275,96 @@ public class RedisTrustedClient {
             System.out.println(row);
         }
     }
+
+    private static void processPopulate(BufferedReader br) throws BadPaddingException {
+        System.out.println("Insert number of elements:");
+
+        Faker faker = new Faker();
+
+        try {
+
+            int number = Integer.parseInt(br.readLine().trim());
+            long time = System.currentTimeMillis();
+            while(number > 0){
+
+                String firstName = faker.name().firstName();
+                String lastName = faker.name().lastName();
+                Random rand = new Random();
+                int integerValue = rand.nextInt(200000);
+                String value = String.valueOf(integerValue);
+
+                jedisInsert(firstName, lastName, value);
+
+                number--;
+            }
+
+            System.out.println( "time -> " + (System.currentTimeMillis() - time) + "ms");
+
+            System.out.println("DOne");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private static void printAllEntries() {
+
+        long getTime = 0;
+        try {
+            getTime = getAll();
+
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+
+        } catch (DecoderException e) {
+            e.printStackTrace();
+
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Total get Time -> " + getTime + "ms");
+
+    }
+        private static long getAll() throws InvalidKeyException, DecoderException, BadPaddingException, IllegalBlockSizeException, NoSuchProviderException, NoSuchAlgorithmException {
+
+            System.out.println("Number of entries: " + test.size());
+
+            cipher.init(Cipher.DECRYPT_MODE, keySecret);
+
+            long startTime = System.currentTimeMillis();
+
+            for (String id : test) {
+
+                Set<String> list = cli.smembers(id);
+
+                for (String innerId : list) {
+
+                    String uncheckedRow = cli.get(innerId);
+
+                    if (checkIntegrity(uncheckedRow)) {
+                        try {
+                            //split to remove integrity field
+                            String[] splitted = uncheckedRow.split("\\:");
+
+                            String row = decryptRow(splitted[0]);
+                            String authenticRow = checkAuthenticity(row);
+
+                        } catch (Exception e) {
+                            System.out.println("An error occurred while decrypting row...");
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+            return System.currentTimeMillis() - startTime;
+        }
 }

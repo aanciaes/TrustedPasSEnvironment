@@ -17,10 +17,13 @@ RUN mkdir -p /usr/share/maven /usr/share/maven/ref \
 ENV MAVEN_HOME /usr/share/maven
 ENV MAVEN_CONFIG "$USER_HOME_DIR/.m2"
 
+RUN apt-get update \
+    && apt-get install -y redis-server
+
 ADD . /home/project
 WORKDIR /home/project
 
-CMD mvn clean install \
-   && java -Djavax.net.ssl.trustStore=configs/client/clientTrustStore \
-        -cp .:target/TrustedPasS-1.0-jar-with-dependencies.jar \
-        unl.fct.srsc.client.RedisTrustedClient
+CMD redis-server --protected-mode no --daemonize yes\
+    && mvn clean install \
+    && java -cp .:target/TrustedPasS-1.0-jar-with-dependencies.jar \
+        unl.fct.srsc.tpm.TpmTLSServer

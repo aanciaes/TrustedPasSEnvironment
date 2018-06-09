@@ -1,0 +1,22 @@
+securityConfig:
+  ciphersuite: blowfish/ECB/PKCS5Padding
+  provider: SunJCE
+  hmac: HMacSHA1
+  keyStoreType: JCEKS
+  keyStoreName: securityStore.jceks
+  keyStorePassword: P4s5w0rd
+  keyName: symkey
+  keyPassword: P4s5w0rd
+  signatureAlgorithm: SHA512withRSA
+  signatureAlgProvider: SunRsaSign
+  signatureKeyName: asymkey
+  signatureKeyPassword: P4s5w0rd
+
+tpmHosts:
+  vmsHost: localhost
+  vmsPort: 9999
+  gosHost: locahost
+  gosPort: 8888
+  ciphersuite: aes/ECB/PKCS5Padding
+  keySize: 256
+  provider: SunJCE
