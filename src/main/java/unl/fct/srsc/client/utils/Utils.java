@@ -1,8 +1,11 @@
-package unl.fct.srsc.utils;
+package unl.fct.srsc.client.utils;
 
+import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
-import unl.fct.srsc.config.Configurations;
-import unl.fct.srsc.config.SecurityConfig;
+import org.yaml.snakeyaml.constructor.Constructor;
+import unl.fct.srsc.client.config.Configurations;
+import unl.fct.srsc.client.config.SecurityConfig;
+import unl.fct.srsc.client.config.TpmHostsConfig;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -13,19 +16,27 @@ import java.security.cert.Certificate;
 public class Utils {
 
     public static final String SECURITY_CONFIG_FILE = "ciphersuite.yml";
-    public static final String SECURITY_CONFIG_LOCATION = "configs/";
+    public static final String SECURITY_CONFIG_LOCATION = "configs/client/";
 
-    public static SecurityConfig readFromConfig() {
-        Yaml yaml = new Yaml();
+    public static Configurations readFromConfig() {
+        Constructor constructor = new Constructor(Configurations.class);
+        TypeDescription configDescription = new TypeDescription(Configurations.class);
+
+        configDescription.addPropertyParameters("securityConfig", SecurityConfig.class);
+        configDescription.addPropertyParameters("tpmHosts", TpmHostsConfig.class);
+        constructor.addTypeDescription(configDescription);
+
+        Yaml yaml = new Yaml(constructor);
 
         try {
             File f = new File(SECURITY_CONFIG_LOCATION + SECURITY_CONFIG_FILE);
             InputStream in = new FileInputStream(f);
             Configurations configs = yaml.loadAs(in, Configurations.class);
-            return configs.getChatRoomConfig();
+
+            return configs;
 
         } catch (Exception e) {
-            //e.printStackTrace();
+            e.printStackTrace();
             System.out.println("Error reading from security configurations");
             return null;
         }
@@ -67,27 +78,6 @@ public class Utils {
             return null;
         }
     }
-
-   /* public static KeyPair getKeyFromKeyStoreTest() {
-
-        try {
-            KeyStore keyStore = KeyStore.getInstance("JKS");
-            // Keystore where symmetric keys are stored (type JCEKS)
-            FileInputStream stream = new FileInputStream("/Users/miguel/Desktop/opkeystore.jks");
-            keyStore.load(stream, "qwerty".toCharArray());
-
-            PrivateKey privateKey = (PrivateKey) keyStore.getKey("mydomain", ("qwerty").toCharArray());
-
-            final Certificate cert = keyStore.getCertificate("mydomain");
-            final PublicKey publicKey = cert.getPublicKey();
-
-            return new KeyPair(publicKey, privateKey);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }*/
 
     private static class FixedRand extends SecureRandom {
         MessageDigest sha;

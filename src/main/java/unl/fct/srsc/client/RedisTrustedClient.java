@@ -1,12 +1,15 @@
-package unl.fct.srsc;
+package unl.fct.srsc.client;
 
 import com.github.javafaker.Faker;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisConnectionException;
-import unl.fct.srsc.config.SecurityConfig;
-import unl.fct.srsc.utils.Utils;
+import unl.fct.srsc.client.config.Configurations;
+import unl.fct.srsc.client.config.SecurityConfig;
+import unl.fct.srsc.client.config.TpmHostsConfig;
+import unl.fct.srsc.client.tpm.TpmConnector;
+import unl.fct.srsc.client.utils.Utils;
 
 import javax.crypto.*;
 import java.io.BufferedReader;
@@ -21,6 +24,7 @@ public class RedisTrustedClient {
     private static final String LOCALHOST = "localhost";
 
     private static SecurityConfig securityConfig;
+    private static TpmHostsConfig tpmHostsConfig;
     private static Jedis cli = null;
 
     private static Set<String> test = new HashSet<String>();
@@ -32,26 +36,28 @@ public class RedisTrustedClient {
 
     public static void main(String[] args) {
         try {
-
             setup();
 
-            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-            String command = "";
+            if(checkTpm ()) {
 
-            while (!(command = br.readLine().trim()).equals("exit")) {
+                BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+                String command = "";
 
-                if (command.equals("insert")) {
-                    processInsert(br);
-                }
-                if (command.equals("get")) {
-                    processGetByName(br);
-                }
-                if(command.equals("populate")){
-                    processPopulate(br);
-                }
+                while (!(command = br.readLine().trim()).equals("exit")) {
 
-                if(command.equals("getAll")){
-                    printAllEntries();
+                    if (command.equals("insert")) {
+                        processInsert(br);
+                    }
+                    if (command.equals("get")) {
+                        processGetByName(br);
+                    }
+                    if (command.equals("populate")) {
+                        processPopulate(br);
+                    }
+
+                    if (command.equals("getAll")) {
+                        printAllEntries();
+                    }
                 }
             }
 
@@ -70,7 +76,10 @@ public class RedisTrustedClient {
         String redisServer = System.getenv(REDIS_SERVER);
         redisServer = redisServer == null ? LOCALHOST : redisServer;
 
-        securityConfig = Utils.readFromConfig();
+        //Configurations
+        Configurations confs = Utils.readFromConfig();
+        securityConfig = confs.getSecurityConfig();
+        tpmHostsConfig = confs.getTpmHosts();
 
         cli = new Jedis(redisServer, 6379);
         cli.ping(); //pinging database
@@ -81,6 +90,16 @@ public class RedisTrustedClient {
 
         keySecret = Utils.getKeyFromKeyStore(securityConfig);
         keyPair = Utils.getKeyPairFromKeyStore(securityConfig);
+    }
+
+
+    private static boolean checkTpm () {
+        String redisServer = System.getenv(REDIS_SERVER);
+        redisServer = redisServer == null ? LOCALHOST : redisServer;
+
+        TpmConnector tpmConnector = new TpmConnector(redisServer, tpmHostsConfig);
+
+        return tpmConnector.checkTpm();
     }
 
     private static void processInsert(BufferedReader br) throws IOException {
