@@ -12,9 +12,9 @@ Then run redis server with TLS server TPM module with the following command ```d
 
 It will download and run the redis server forwarding the VM port 6379 to container 6379 port where the redis server is running
 
---network host: to remove isolation from docker container e host
--p 9999:9999: maps the tls tpm module port. Can be changed if the change is reflected on te server config file
--p 6379:6379: maps the redis port.
+* --network host: to remove isolation from docker container and host
+* -p 9999:9999: maps the tls tpm module port. Can be changed if the change is reflected on te server config file
+* -p 6379:6379: maps the redis port.
 
 #### Server Configurations
 
@@ -27,7 +27,7 @@ Create a folder with the following structure:
               
 With the ciphersuite.yml with the following structure:
 
-```
+```yaml
 #YAML
 serverConfig:
   keyStoreType: JKS
