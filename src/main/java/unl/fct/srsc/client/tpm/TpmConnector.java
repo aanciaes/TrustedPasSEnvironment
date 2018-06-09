@@ -1,6 +1,5 @@
 package unl.fct.srsc.client.tpm;
 
-import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import unl.fct.srsc.client.config.TpmHostsConfig;
 import unl.fct.srsc.tpm.Utils;
@@ -9,10 +8,12 @@ import javax.crypto.KeyAgreement;
 import javax.crypto.interfaces.DHPublicKey;
 import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.DHPublicKeySpec;
-import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.math.BigInteger;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
@@ -21,6 +22,11 @@ public class TpmConnector {
 
     private static final String REQUEST_CODE = "0x00";
     private static final String RESPONSE_CODE = "0x01";
+    private static final int ATTESTATION_RESPONSE = 0;
+    private static final int ATTESTATION_SIGNATURE = 1;
+    private static final int SIGNATURE_DH_PUB_N = 0;
+    private static final int SIGNATURE_NONCE = 1;
+    private static final int ATTESTATION_STATUS = 2;
 
     private String redisServer;
     private TpmHostsConfig tpmHostsConfig;
@@ -42,12 +48,12 @@ public class TpmConnector {
     private KeyAgreement keyAgree;
     private KeyPair pair;
 
-    public TpmConnector (String redisServer, TpmHostsConfig tpmHostsConfig) {
+    public TpmConnector(String redisServer, TpmHostsConfig tpmHostsConfig) {
         this.redisServer = redisServer;
         this.tpmHostsConfig = tpmHostsConfig;
     }
 
-    public boolean checkTpm () {
+    public boolean checkTpm() {
 
         SSLSocketFactory f =
                 (SSLSocketFactory) SSLSocketFactory.getDefault();
@@ -63,13 +69,16 @@ public class TpmConnector {
             startDiffieHellman();
 
             String m = buildRequest();
+
+            String nonce = m.split("\\|")[2]; //Saving nonce for response
+
             w.write(m, 0, m.length());
             w.newLine();
             w.flush();
 
             String rst = r.readLine();
             System.out.println("Response: " + rst);
-            analizeResponse (rst);
+            analizeResponse(rst, nonce);
             w.close();
             r.close();
             c.close();
@@ -81,16 +90,17 @@ public class TpmConnector {
         return false;
     }
 
-    private String buildRequest () {
-        String pubDH = ((DHPublicKey)pair.getPublic()).getY().toString();
+    private String buildRequest() {
+        String pubDH = ((DHPublicKey) pair.getPublic()).getY().toString();
         String nonce = Utils.randomNonce();
 
         return String.format("%s|%s|%s", REQUEST_CODE, pubDH, nonce);
     }
 
-    private void startDiffieHellman () throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException {
+    private void startDiffieHellman() throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException {
         dhParams = new DHParameterSpec(p512, g512);
-        keyGen = KeyPairGenerator.getInstance("DH", "SunJCE");;
+        keyGen = KeyPairGenerator.getInstance("DH", "SunJCE");
+        ;
 
         keyGen.initialize(dhParams, new SecureRandom());
         keyAgree = KeyAgreement.getInstance("DH", "SunJCE");
@@ -99,15 +109,23 @@ public class TpmConnector {
         keyAgree.init(pair.getPrivate());
     }
 
-    private void analizeResponse (String response) throws DecoderException, InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException {
-        String [] res = response.split("\\|");
+    private void analizeResponse(String response, String nonce) throws InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException {
+        String[] res = response.split("\\|");
 
-        BigInteger y = new BigInteger(res[1]);
-        PublicKey p = KeyFactory.getInstance("DH").generatePublic(new DHPublicKeySpec(y, p512, g512));
+        if (res[ATTESTATION_RESPONSE].equals(RESPONSE_CODE)) {
+            String[] signature = res[ATTESTATION_SIGNATURE].split("\\:");
 
-        keyAgree.doPhase(p, true);
+            String oldNoncePlusOne = new BigInteger(nonce).add(BigInteger.ONE).toString();
 
-        String secret = Hex.encodeHexString(keyAgree.generateSecret());
-        System.out.println("GENERATED SECRET: " + secret);
+            if (oldNoncePlusOne.equals(signature[SIGNATURE_NONCE])) {
+                BigInteger y = new BigInteger(signature[SIGNATURE_DH_PUB_N]);
+                PublicKey p = KeyFactory.getInstance("DH").generatePublic(new DHPublicKeySpec(y, p512, g512));
+
+                keyAgree.doPhase(p, true);
+
+                String secret = Hex.encodeHexString(keyAgree.generateSecret());
+                System.out.println("GENERATED SECRET: " + secret);
+            }
+        }
     }
 }
