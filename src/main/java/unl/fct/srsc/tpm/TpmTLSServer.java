@@ -27,6 +27,8 @@ public class TpmTLSServer {
     private static final int ATTESTATION_CIPHERSUITE_PROVIDER = 4;
     private static final int ATTESTATION_CIPHERSUITE_KEYSIZE = 5;
 
+    private static final String ERROR_MESSAGE = "Error Message";
+
     // Parametro para o gerador do Grupo de Cobertura de P
     private static BigInteger g512 = new BigInteger(
             "153d5d6172adb43045b68ae8e1de1070b6137005686d29d3d73a7"
@@ -130,7 +132,7 @@ public class TpmTLSServer {
             e.printStackTrace();
         }
 
-        return "error";
+        return ERROR_MESSAGE;
     }
 
     private static String getTPMStatus() {

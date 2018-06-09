@@ -33,6 +33,8 @@ public class TpmConnector {
     private static final int SIGNATURE_NONCE = 1;
     private static final int ATTESTATION_STATUS = 2;
 
+    private static final String ERROR_MESSAGE = "Error Message";
+
     private String redisServer;
     private TpmHostsConfig tpmHostsConfig;
 
@@ -86,12 +88,12 @@ public class TpmConnector {
 
             String rst = r.readLine();
             System.out.println("Response: " + rst);
-            analizeResponse(rst, nonce);
+            boolean status = analizeResponse(rst, nonce);
             w.close();
             r.close();
             c.close();
 
-            return true;
+            return status;
         } catch (Exception e) {
             System.err.println(e.toString());
             e.printStackTrace();
@@ -119,35 +121,39 @@ public class TpmConnector {
         keyAgree.init(pair.getPrivate());
     }
 
-    private void analizeResponse(String response, String nonce) throws InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException, NoSuchPaddingException, BadPaddingException, IllegalBlockSizeException, DecoderException {
-        String[] res = response.split("\\|");
+    private boolean analizeResponse(String response, String nonce) throws InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException, NoSuchPaddingException, BadPaddingException, IllegalBlockSizeException, DecoderException {
+        if(!response.equals(ERROR_MESSAGE)) {
+            String[] res = response.split("\\|");
 
-        if (res[ATTESTATION_RESPONSE].equals(RESPONSE_CODE)) {
-            String[] signature = res[ATTESTATION_SIGNATURE].split("\\:");
+            if (res[ATTESTATION_RESPONSE].equals(RESPONSE_CODE)) {
+                String[] signature = res[ATTESTATION_SIGNATURE].split("\\:");
 
-            String oldNoncePlusOne = new BigInteger(nonce).add(BigInteger.ONE).toString();
+                String oldNoncePlusOne = new BigInteger(nonce).add(BigInteger.ONE).toString();
 
-            if (oldNoncePlusOne.equals(signature[SIGNATURE_NONCE])) {
-                BigInteger y = new BigInteger(signature[SIGNATURE_DH_PUB_N]);
-                PublicKey p = KeyFactory.getInstance(DIFFIE_HELLMAN).generatePublic(new DHPublicKeySpec(y, p1024, g512));
+                if (oldNoncePlusOne.equals(signature[SIGNATURE_NONCE])) {
+                    BigInteger y = new BigInteger(signature[SIGNATURE_DH_PUB_N]);
+                    PublicKey p = KeyFactory.getInstance(DIFFIE_HELLMAN).generatePublic(new DHPublicKeySpec(y, p1024, g512));
 
-                keyAgree.doPhase(p, true);
+                    keyAgree.doPhase(p, true);
 
-                byte[] agreedKey = keyAgree.generateSecret();
-                int keySize = Integer.parseInt(tpmHostsConfig.getKeySize())/8;
-                byte[] agreedCroppedKey = new byte[keySize];
-                System.arraycopy(agreedKey, 0, agreedCroppedKey, 0, keySize);
+                    byte[] agreedKey = keyAgree.generateSecret();
+                    int keySize = Integer.parseInt(tpmHostsConfig.getKeySize()) / 8;
+                    byte[] agreedCroppedKey = new byte[keySize];
+                    System.arraycopy(agreedKey, 0, agreedCroppedKey, 0, keySize);
 
-                String alg = tpmHostsConfig.getCiphersuite().split("\\/")[0];
+                    String alg = tpmHostsConfig.getCiphersuite().split("\\/")[0];
 
-                Cipher c = Cipher.getInstance(tpmHostsConfig.getCiphersuite(), tpmHostsConfig.getProvider());
-                c.init(Cipher.DECRYPT_MODE, new SecretKeySpec(agreedCroppedKey, alg));
+                    Cipher c = Cipher.getInstance(tpmHostsConfig.getCiphersuite(), tpmHostsConfig.getProvider());
+                    c.init(Cipher.DECRYPT_MODE, new SecretKeySpec(agreedCroppedKey, alg));
 
-                c.update(Hex.decodeHex(res[ATTESTATION_STATUS]));
-                byte [] decryptedCore = c.doFinal();
+                    c.update(Hex.decodeHex(res[ATTESTATION_STATUS]));
+                    byte[] decryptedCore = c.doFinal();
 
-                System.out.println("Attestation Status: " + new String (decryptedCore));
+                    System.out.println("Attestation Status: " + new String(decryptedCore));
+                    return true;
+                }
             }
         }
+        return false;
     }
 }
