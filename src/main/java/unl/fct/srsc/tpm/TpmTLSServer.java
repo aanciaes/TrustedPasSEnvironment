@@ -1,6 +1,7 @@
 package unl.fct.srsc.tpm;
 
 import org.apache.commons.codec.binary.Hex;
+import unl.fct.srsc.tpm.config.ServerConfig;
 
 import javax.crypto.*;
 import javax.crypto.interfaces.DHPublicKey;
@@ -11,7 +12,6 @@ import javax.net.ssl.*;
 import java.io.*;
 import java.math.BigInteger;
 import java.security.*;
-import java.util.Arrays;
 
 public class TpmTLSServer {
 
@@ -29,6 +29,9 @@ public class TpmTLSServer {
 
     private static final String ERROR_MESSAGE = "Error Message";
 
+    public static final String SECURITY_CONFIG_LOCATION = "configs/server/";
+    private static ServerConfig serverConfig;
+
     // Parametro para o gerador do Grupo de Cobertura de P
     private static BigInteger g512 = new BigInteger(
             "153d5d6172adb43045b68ae8e1de1070b6137005686d29d3d73a7"
@@ -44,17 +47,24 @@ public class TpmTLSServer {
                     + "f0573bf047a3aca98cdf3b", 16);
 
     public static void main(String[] args) {
-        String[] confciphersuites = {"TLS_RSA_WITH_AES_256_CBC_SHA256"};
-        String[] confprotocols = {"TLSv1.2"};
+        serverConfig = Utils.readFromConfig();
+
+        String[] confciphersuites = new String [serverConfig.getCiphersuites().size()];
+        serverConfig.getCiphersuites().toArray(confciphersuites);
+
+        String[] confprotocols = new String [serverConfig.getConfProtocols().size()];
+        serverConfig.getConfProtocols().toArray(confprotocols);
+
 
         try {
-            KeyStore ks = KeyStore.getInstance("JKS");
-            ks.load(new FileInputStream("configs/server/server.jks"), "P4s5w0rd".toCharArray());
+            KeyStore ks = KeyStore.getInstance(serverConfig.getKeyStoreType());
+            ks.load(new FileInputStream(SECURITY_CONFIG_LOCATION + serverConfig.getKeyStoreName()),
+                    serverConfig.getKeyStorePassword().toCharArray());
             KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
 
-            kmf.init(ks, "P4s5w0rd".toCharArray());
+            kmf.init(ks, serverConfig.getKeyPassword().toCharArray());
 
-            SSLContext sc = SSLContext.getInstance("TLS");
+            SSLContext sc = SSLContext.getInstance(serverConfig.getSslContext());
             sc.init(kmf.getKeyManagers(), null, null);
             SSLServerSocketFactory ssf = sc.getServerSocketFactory();
             SSLServerSocket s
@@ -75,7 +85,7 @@ public class TpmTLSServer {
 
                 String m;
                 while ((m = r.readLine()) != null) {
-                    System.out.println(m);
+                    System.out.println("Recieved request: " + m);
                     String rst = buildResponse(m);
                     w.write(rst, 0, rst.length());
                     w.newLine();
