@@ -10,22 +10,12 @@ public class TpmStateData {
     private static Process p;
     private static List<String> state = new ArrayList<String>(10);
 
-    public static void main(String[] args) throws IOException {
+    public static List<String> getState() throws IOException {
 
         startTerminal();
         runCommand("ps -ef");
         print();
-
-        String line = state.get(1);
-        String[] newLine = line.split("\\s+");
-
-        if(!newLine[1].trim().equals("1") || !newLine[7].trim().equals("/sbin/init")){
-            System.out.println("Corrupted");
-        }
-        else{
-            System.out.println("All Ok!");
-        }
-
+        return state;
     }
 
     private static void runCommand(String Command) throws IOException {
@@ -41,6 +31,11 @@ public class TpmStateData {
         int n = 0;
 
         while ((line = br.readLine()) != null && n < 10) {
+            String[] newLine = line.split("\\s+");
+            String finalLine = "";
+            for(int x= 0; x < newLine.length; x++){
+                finalLine += "|" + newLine[x];
+            }
 
             state.add(n++, line);
             System.out.println(line);

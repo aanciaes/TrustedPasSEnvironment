@@ -12,6 +12,7 @@ import javax.net.ssl.*;
 import java.io.*;
 import java.math.BigInteger;
 import java.security.*;
+import java.util.List;
 
 public class TpmTLSServer {
 
@@ -107,7 +108,7 @@ public class TpmTLSServer {
         try {
 
             if (rq[ATTESTATION_REQUEST].equals(REQUEST_CODE)) {
-                String tpmStatus = getTPMStatus();
+                List<String> tpmStatus = getTPMStatus();
                 String noncePlusOne = new BigInteger(rq[ATTESTATION_NONCE]).add(BigInteger.ONE).toString();
                 String ciphersuite = rq[ATTESTATION_CIPHERSUITE];
                 String provider = rq[ATTESTATION_CIPHERSUITE_PROVIDER];
@@ -145,18 +146,31 @@ public class TpmTLSServer {
         return ERROR_MESSAGE;
     }
 
-    private static String getTPMStatus() {
-        return "tpm_status_ok";
+    private static List<String> getTPMStatus() throws IOException {
+
+        return TpmStateData.getState();
     }
 
-    private static byte[] encryptStatus (String tpmStatus, String ciphersuite, String provider, byte[] key) throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+    private static byte[] encryptStatus (List<String> tpmStatus, String ciphersuite, String provider, byte[] key) throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         String alg = ciphersuite.split("\\/")[0];
 
         Cipher c = Cipher.getInstance(ciphersuite, provider);
         c.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, alg));
-
-        c.update(tpmStatus.getBytes());
+        c.update(listToBytes(tpmStatus));
 
         return c.doFinal();
+    }
+
+    private static byte[] listToBytes(List<String> list){
+
+        String result ="";
+
+        for ( String line: list) {
+            result += ":" +line;
+        }
+
+        result += "/";
+
+        return result.getBytes();
     }
 }
