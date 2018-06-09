@@ -1,13 +1,15 @@
 package unl.fct.srsc.client.tpm;
 
+import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import unl.fct.srsc.client.config.TpmHostsConfig;
 import unl.fct.srsc.tpm.Utils;
 
-import javax.crypto.KeyAgreement;
+import javax.crypto.*;
 import javax.crypto.interfaces.DHPublicKey;
 import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.DHPublicKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.BufferedReader;
@@ -39,6 +41,9 @@ public class TpmConnector {
     // Um grande numero primo P
     private static BigInteger p512 = new BigInteger(
             "9494fec095f3b85ee286542b3836fc81a5dd0a0349b4c239dd387"
+                    + "44d488cf8e31db8bcb7d33b41abb9e5a33cca9144b1cef332c94b"
+                    + "f0573bf047a3aca98cdf3b"
+                    + "9494fec095f3b85ee286542b3836fc81a5dd0a0349b4c239dd387"
                     + "44d488cf8e31db8bcb7d33b41abb9e5a33cca9144b1cef332c94b"
                     + "f0573bf047a3aca98cdf3b", 16);
 
@@ -86,6 +91,7 @@ public class TpmConnector {
             return true;
         } catch (Exception e) {
             System.err.println(e.toString());
+            e.printStackTrace();
         }
         return false;
     }
@@ -94,7 +100,8 @@ public class TpmConnector {
         String pubDH = ((DHPublicKey) pair.getPublic()).getY().toString();
         String nonce = Utils.randomNonce();
 
-        return String.format("%s|%s|%s", REQUEST_CODE, pubDH, nonce);
+        return String.format("%s|%s|%s|%s|%s", REQUEST_CODE, pubDH, nonce,
+                tpmHostsConfig.getCiphersuite(), tpmHostsConfig.getProvider());
     }
 
     private void startDiffieHellman() throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException {
@@ -109,7 +116,7 @@ public class TpmConnector {
         keyAgree.init(pair.getPrivate());
     }
 
-    private void analizeResponse(String response, String nonce) throws InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException {
+    private void analizeResponse(String response, String nonce) throws InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException, NoSuchPaddingException, BadPaddingException, IllegalBlockSizeException, DecoderException {
         String[] res = response.split("\\|");
 
         if (res[ATTESTATION_RESPONSE].equals(RESPONSE_CODE)) {
@@ -123,8 +130,19 @@ public class TpmConnector {
 
                 keyAgree.doPhase(p, true);
 
-                String secret = Hex.encodeHexString(keyAgree.generateSecret());
-                System.out.println("GENERATED SECRET: " + secret);
+                byte[] agreedKey = keyAgree.generateSecret();
+                byte[] agreedCroppedKey = new byte[32];
+                System.arraycopy(agreedKey, 0, agreedCroppedKey, 0, 32);
+
+                String alg = tpmHostsConfig.getCiphersuite().split("\\/")[0];
+
+                Cipher c = Cipher.getInstance(tpmHostsConfig.getCiphersuite(), tpmHostsConfig.getProvider());
+                c.init(Cipher.DECRYPT_MODE, new SecretKeySpec(agreedCroppedKey, alg));
+
+                c.update(Hex.decodeHex(res[ATTESTATION_STATUS]));
+                byte [] decryptedCore = c.doFinal();
+
+                System.out.println("Attestation Status: " + new String (decryptedCore));
             }
         }
     }

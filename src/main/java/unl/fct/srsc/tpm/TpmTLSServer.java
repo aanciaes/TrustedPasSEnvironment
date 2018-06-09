@@ -2,14 +2,16 @@ package unl.fct.srsc.tpm;
 
 import org.apache.commons.codec.binary.Hex;
 
-import javax.crypto.KeyAgreement;
+import javax.crypto.*;
 import javax.crypto.interfaces.DHPublicKey;
 import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.DHPublicKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.*;
 import java.io.*;
 import java.math.BigInteger;
 import java.security.*;
+import java.util.Arrays;
 
 public class TpmTLSServer {
 
@@ -18,6 +20,8 @@ public class TpmTLSServer {
     private static final int ATTESTATION_REQUEST = 0;
     private static final int ATTESTATION_DH_PUB_N = 1;
     private static final int ATTESTATION_NONCE = 2;
+    private static final int ATTESTATION_CIPHERSUITE = 3;
+    private static final int ATTESTATION_CIPHERSUITE_PROVIDER = 4;
 
     // Parametro para o gerador do Grupo de Cobertura de P
     private static BigInteger g512 = new BigInteger(
@@ -28,8 +32,10 @@ public class TpmTLSServer {
     private static BigInteger p512 = new BigInteger(
             "9494fec095f3b85ee286542b3836fc81a5dd0a0349b4c239dd387"
                     + "44d488cf8e31db8bcb7d33b41abb9e5a33cca9144b1cef332c94b"
+                    + "f0573bf047a3aca98cdf3b"
+                    + "9494fec095f3b85ee286542b3836fc81a5dd0a0349b4c239dd387"
+                    + "44d488cf8e31db8bcb7d33b41abb9e5a33cca9144b1cef332c94b"
                     + "f0573bf047a3aca98cdf3b", 16);
-
 
     public static void main(String[] args) {
         String[] confciphersuites = {"TLS_RSA_WITH_AES_256_CBC_SHA256"};
@@ -87,6 +93,8 @@ public class TpmTLSServer {
             if (rq[ATTESTATION_REQUEST].equals(REQUEST_CODE)) {
                 String tpmStatus = getTPMStatus();
                 String noncePlusOne = new BigInteger(rq[ATTESTATION_NONCE]).add(BigInteger.ONE).toString();
+                String ciphersuite = rq[ATTESTATION_CIPHERSUITE];
+                String provider = rq[ATTESTATION_CIPHERSUITE_PROVIDER];
 
                 DHParameterSpec dhParams = new DHParameterSpec(p512, g512);
                 KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DH", "SunJCE");
@@ -101,11 +109,17 @@ public class TpmTLSServer {
 
                 keyAgree.doPhase(p, true);
 
-                String secret = Hex.encodeHexString(keyAgree.generateSecret());
-                System.out.println("GENERATED SECRET: " + secret);
+                byte [] agreedKey = keyAgree.generateSecret();
+                byte [] agreedCroppedKey = new byte[32];
+                System.arraycopy(agreedKey,0,agreedCroppedKey, 0, 32);
+                System.out.println("Cropped key: " + Hex.encodeHexString(agreedCroppedKey));
+
                 String pubKey = ((DHPublicKey) pair.getPublic()).getY().toString();
 
-                return String.format("%s|%s:%s|%s", RESPONSE_CODE, pubKey, noncePlusOne, tpmStatus);
+                byte [] encAttestationStatus = encryptStatus (tpmStatus, ciphersuite, provider, agreedCroppedKey);
+
+                return String.format("%s|%s:%s|%s", RESPONSE_CODE, pubKey, noncePlusOne,
+                        Hex.encodeHexString(encAttestationStatus));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -116,5 +130,16 @@ public class TpmTLSServer {
 
     private static String getTPMStatus() {
         return "tpm_status_ok";
+    }
+
+    private static byte[] encryptStatus (String tpmStatus, String ciphersuite, String provider, byte[] key) throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+        String alg = ciphersuite.split("\\/")[0];
+
+        Cipher c = Cipher.getInstance(ciphersuite, provider);
+        c.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, alg));
+
+        c.update(tpmStatus.getBytes());
+
+        return c.doFinal();
     }
 }

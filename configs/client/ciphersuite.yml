@@ -17,3 +17,5 @@ tpmHosts:
   vmsPort: 9999
   gosHost: locahost
   gosPort: 8888
+  ciphersuite: aes/ECB/PKCS5Padding
+  provider: SunJCE
