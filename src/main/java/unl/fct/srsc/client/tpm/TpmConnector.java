@@ -181,6 +181,7 @@ public class TpmConnector {
         int n = 0;
 
         for(String line : stateConfig){
+            System.out.println("IS THIS -> " + line + " Equal to this -> " + processList.get(n++));
            if(!processList.get(n).equals(line)){
                return false;
            }
