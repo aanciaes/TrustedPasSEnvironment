@@ -8,7 +8,7 @@ public class TpmStateData {
 
     public static List<String> getState() throws IOException {
 
-        Process process = Runtime.getRuntime().exec("ps -U root");
+        Process process = Runtime.getRuntime().exec("ps -eo user=USER,pid=PID,stime=START-TIME,comm=COMMAND");
         return print(process);
 
     }
