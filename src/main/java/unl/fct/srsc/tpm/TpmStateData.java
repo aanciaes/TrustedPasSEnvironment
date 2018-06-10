@@ -22,7 +22,7 @@ public class TpmStateData {
 
     private static List<String> clear(List<String> print) {
         List<String> rst = new ArrayList<String>();
-
+        System.out.println("redis line size " + print.size());
         String[] t = print.get(0).split("\\s+");
         rst.add(t[0]);
 
