@@ -24,6 +24,7 @@ public class TpmStateData {
 
     private static List<String> clear(List<String> print) {
         List<String> rst = new ArrayList<String>();
+
         System.out.println("redis line size " + print.size());
         String[] t = print.get(0).split("\\s+");
         rst.add(t[0]);
@@ -44,7 +45,7 @@ public class TpmStateData {
 
     private static List<String> print(Process p) throws IOException {
 
-        List<String> state = new ArrayList<String>(10);
+        List<String> state = new ArrayList<String>();
         String line;
         BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
         int n = 0;
@@ -59,7 +60,7 @@ public class TpmStateData {
             state.add(n++, finalLine);
             System.out.println(finalLine);
         }
-
+        System.out.println("OUT PRINT");
         br.close();
 
         return state;
