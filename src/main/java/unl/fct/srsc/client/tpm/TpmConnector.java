@@ -59,10 +59,25 @@ public class TpmConnector {
     private KeyPairGenerator keyGen;
     private KeyAgreement keyAgree;
     private KeyPair pair;
+    private List<String> stateConfig;
 
     public TpmConnector(String redisServer, TpmHostsConfig tpmHostsConfig) {
         this.redisServer = redisServer;
         this.tpmHostsConfig = tpmHostsConfig;
+        this.stateConfig = new ArrayList<String>();
+        setStateConfig();
+    }
+
+    private void setStateConfig() {
+        String line = "root sh";
+        stateConfig.add(line);
+        line = "root redis-server";
+        stateConfig.add(line);
+        line = "root java";
+        stateConfig.add(line);
+        line="root ps";
+        stateConfig.add(line);
+
     }
 
     public boolean checkTpm() {
@@ -163,12 +178,15 @@ public class TpmConnector {
     }
 
     private boolean checkValidState(List<String> processList) {
+        int n = 0;
 
-        if(processList.size()>0){
-            return true;
+        for(String line : stateConfig){
+           if(!processList.get(n).equals(line)){
+               return false;
+           }
+
         }
-
-        return false;
+        return true;
     }
 
     private List<String> stringTolist(String processString) {
