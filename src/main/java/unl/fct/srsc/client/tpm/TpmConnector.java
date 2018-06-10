@@ -19,6 +19,8 @@ import java.io.OutputStreamWriter;
 import java.math.BigInteger;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TpmConnector {
 
@@ -148,11 +150,38 @@ public class TpmConnector {
 
                     byte[] decryptedCore = c.doFinal(Hex.decodeHex(res[ATTESTATION_STATUS]));
 
-                    System.out.println("Attestation Status: " + new String(decryptedCore));
-                    return true;
+                    String processString = new String(decryptedCore);
+                    System.out.println("Attestation Status: " + processString);
+
+                    List<String> processList = stringTolist(processString);
+
+                    return checkValidState(processList);
                 }
             }
         }
         return false;
+    }
+
+    private boolean checkValidState(List<String> processList) {
+
+        if(processList.size()>0){
+            return true;
+        }
+
+        return false;
+    }
+
+    private List<String> stringTolist(String processString) {
+        List<String> output = new ArrayList<String>();
+
+        String[] lines = processString.split(":");
+
+        for(String line: lines){
+            output.add(line);
+            System.out.println(line);
+        }
+
+        return output;
+
     }
 }
