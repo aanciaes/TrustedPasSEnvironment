@@ -177,7 +177,9 @@ public class TpmConnector {
         String[] lines = processString.split("#");
 
         for(String line: lines){
+            line = line.replaceAll("&", " ");
             output.add(line);
+
             System.out.println(line);
         }
 
