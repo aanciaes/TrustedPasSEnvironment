@@ -2,15 +2,42 @@ package unl.fct.srsc.tpm;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class TpmStateData {
 
     public static List<String> getState() throws IOException {
 
+        List<String> result = new ArrayList<String>();
         Process process = Runtime.getRuntime().exec("ps -eo user,comm --no-heading");
-        return print(process);
+        result.addAll(print(process));
+        process = Runtime.getRuntime().exec("docker ps");
+        String id = getRedisContainer(print(process));
+        process = Runtime.getRuntime().exec("docker exec -d " + id + " sha256sum /user/local/bin/redis-server");
 
+        result.addAll(clear(print(process)));
+        return result;
+    }
+
+    private static List<String> clear(List<String> print) {
+        List<String> rst = new ArrayList<String>();
+
+        String[] t = print.get(0).split("\\s+");
+        rst.add(t[0]);
+
+        return rst;
+    }
+
+    private static String getRedisContainer(List<String> ps) {
+
+        for(String line : ps){
+            if(line.contains("redis")){
+                String[] splited = line.split("&");
+                return splited[0];
+            }
+        }
+        return "";
     }
 
     private static List<String> print(Process p) throws IOException {
