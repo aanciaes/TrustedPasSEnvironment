@@ -43,6 +43,12 @@ serverConfig:
 
 and run the server with the argument ````-v /path/to/folder/created:/home/project/configs/server````
 
+#### Redis Configuration file
+Additionally you can specify your own redis configuration file with the argument ````-v /path/to/redis.conf:/home/project/configs````
+
+Make sure to always leave the daemonize configuration to YES so redis can run smoothly on the background
+If you want to specify a password, make sure to indicate it in the client config file as well
+
 ##### Important
 Make sure to setup port forwarding on virtual box as well, to map the port 6379 of the host to the VM (on 6379 as well)
 
@@ -85,6 +91,7 @@ securityConfig:
     signatureAlgProvider: SunRsaSign    # Provider of the digital signature algorithm
     signatureKeyName: asymkey           # Asymetric key pair alias
     signatureKeyPassword: P4s5w0rd      # Asymetric key pair password
+    redisPassword: foobared             # Redis Password (Leave blank if no authentication is required)
     
 tpmHosts:
   vmsHost: localhost                    # VMS module SSL server host

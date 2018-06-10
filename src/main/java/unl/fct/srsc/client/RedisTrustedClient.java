@@ -82,6 +82,9 @@ public class RedisTrustedClient {
         tpmHostsConfig = confs.getTpmHosts();
 
         cli = new Jedis(redisServer, 6379);
+        if(securityConfig.getRedisPassword() != null){
+            cli.auth(securityConfig.getRedisPassword());
+        }
         cli.ping(); //pinging database
 
         System.out.println(REDIS_SERVER + " : " + redisServer);
