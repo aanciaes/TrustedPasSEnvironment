@@ -16,7 +16,7 @@ public class TpmStateData {
         process = Runtime.getRuntime().exec("docker ps");
         String id = getRedisContainer(print(process));
 
-        process = Runtime.getRuntime().exec("docker exec " + id + " sha256sum /user/local/bin/redis-server");
+        process = Runtime.getRuntime().exec("docker exec -t " + id + " sha256sum /user/local/bin/redis-server");
 
         result.addAll(clear(print(process)));
         return result;
