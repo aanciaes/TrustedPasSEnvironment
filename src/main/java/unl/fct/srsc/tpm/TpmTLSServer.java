@@ -165,10 +165,8 @@ public class TpmTLSServer {
         String result = "";
 
         for (String line : list) {
-            result += "*" + line;
+            result += "#" + line;
         }
-
-        result += "/";
         return result.getBytes();
     }
 }

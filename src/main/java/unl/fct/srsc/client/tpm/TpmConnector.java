@@ -174,7 +174,7 @@ public class TpmConnector {
     private List<String> stringTolist(String processString) {
         List<String> output = new ArrayList<String>();
 
-        String[] lines = processString.split("*");
+        String[] lines = processString.split("#");
 
         for(String line: lines){
             output.add(line);
