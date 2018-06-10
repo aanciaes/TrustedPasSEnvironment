@@ -20,10 +20,13 @@ ENV MAVEN_CONFIG "$USER_HOME_DIR/.m2"
 RUN apt-get update \
     && apt-get install -y redis-server
 
+# Set redis configuration file
+ADD ./configs/redis.conf /etc/redis/redis.conf
+
 ADD . /home/project
 WORKDIR /home/project
 
-CMD redis-server --protected-mode no --daemonize yes\
+CMD redis-server /etc/redis/redis.conf \
     && mvn clean install \
     && java -cp .:target/TrustedPasS-1.0-jar-with-dependencies.jar \
         unl.fct.srsc.tpm.TpmTLSServer
