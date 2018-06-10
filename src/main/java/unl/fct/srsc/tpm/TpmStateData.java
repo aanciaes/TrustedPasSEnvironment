@@ -6,55 +6,33 @@ import java.util.List;
 
 public class TpmStateData {
 
-    private static BufferedWriter p_stdin;
-    private static Process p;
-    private static List<String> state = new ArrayList<String>(10);
-
     public static List<String> getState() throws IOException {
 
-        startTerminal();
-        runCommand("ps -ef");
-        print();
-        return state;
+        Process process = Runtime.getRuntime().exec("ps -U root");
+        return print(process);
+
     }
 
-    private static void runCommand(String Command) throws IOException {
-        p_stdin.write(Command);
-        p_stdin.newLine();
-        p_stdin.flush();
-    }
+    private static List<String> print(Process p) throws IOException {
 
-    private static void print() throws IOException {
-
+        List<String> state = new ArrayList<String>(10);
         String line;
         BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
         int n = 0;
 
-        while ((line = br.readLine()) != null && n < 10) {
+        while ((line = br.readLine()) != null) {
             String[] newLine = line.split("\\s+");
             String finalLine = "";
             for(int x= 0; x < newLine.length; x++){
-                finalLine += "|" + newLine[x];
+                finalLine += newLine[x] + "&";
             }
 
-            state.add(n++, line);
-            System.out.println(line);
+            state.add(n++, finalLine);
+            System.out.println(finalLine);
         }
 
         br.close();
-    }
 
-    private static void startTerminal() {
-
-        ProcessBuilder builder = new ProcessBuilder("/bin/bash");
-        p = null;
-
-        try {
-            p = builder.start();
-        } catch (IOException e) {
-            System.out.println(e);
-        }
-        //get stdin of shell
-        p_stdin = new BufferedWriter(new OutputStreamWriter(p.getOutputStream()));
+        return state;
     }
 }

@@ -146,8 +146,7 @@ public class TpmConnector {
                     Cipher c = Cipher.getInstance(tpmHostsConfig.getCiphersuite(), tpmHostsConfig.getProvider());
                     c.init(Cipher.DECRYPT_MODE, new SecretKeySpec(agreedCroppedKey, alg));
 
-                    c.update(Hex.decodeHex(res[ATTESTATION_STATUS]));
-                    byte[] decryptedCore = c.doFinal();
+                    byte[] decryptedCore = c.doFinal(Hex.decodeHex(res[ATTESTATION_STATUS]));
 
                     System.out.println("Attestation Status: " + new String(decryptedCore));
                     return true;
