@@ -27,7 +27,7 @@ public class RedisTrustedClient {
     private static TpmHostsConfig tpmHostsConfig;
     private static Jedis cli = null;
 
-    private static Set<String> test = new HashSet<String>();
+    private static List<String> test = new ArrayList<String>();
 
     private static Key keySecret = null;
     private static KeyPair keyPair = null;
@@ -392,21 +392,16 @@ public class RedisTrustedClient {
     			long startTime = System.currentTimeMillis();
     			
     			Random r = new Random();
-    			List<String> auxList = new ArrayList<String>();
-    			
-    			for (String id : test) {
-					auxList.add(id);
-				}
     			
     			while(num > 0){
     				
     				int rdm = r.nextInt(test.size()-1);
     				
-    				String keyword = auxList.get(rdm);
+    				String keyword = test.get(rdm);
     				cli.set(keyword, generateRandomStr(100));
 
     				cli.del(keyword);
-    				auxList.remove(rdm);
+    				test.remove(rdm);
     				
     				num--;
     			}
