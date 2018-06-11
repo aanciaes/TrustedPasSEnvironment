@@ -1,0 +1,10 @@
+serverConfig:
+  keyStoreType: JKS
+  keyStoreName: server.jks
+  keyStorePassword: P4s5w0rd
+  keyPassword: P4s5w0rd
+  ciphersuites:
+    - TLS_RSA_WITH_AES_256_CBC_SHA256
+  confProtocols:
+   - TLSv1.2
+  sslContext: TLS
