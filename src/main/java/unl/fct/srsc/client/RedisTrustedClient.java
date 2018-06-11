@@ -384,23 +384,33 @@ public class RedisTrustedClient {
             return System.currentTimeMillis() - startTime;
         }
         
-        private void remove(String keyword) throws Exception{
-
-    		System.out.println("Deleting " + keyword + " from redis");
-
-    		cipher.init(Cipher.DECRYPT_MODE,  keySecret);
+        private void remove(int num) throws Exception{
 
     		try{
+    			cipher.init(Cipher.DECRYPT_MODE,  keySecret);	
+    			
+    			long startTime = System.currentTimeMillis();
+    			
     			Random r = new Random();
-
-    			if(cli.exists(keyword)){
-
-    				String aux = generateRandomStr(100);
-    				cli.set(keyword, aux);
+    			List<String> auxList = new ArrayList<String>();
+    			
+    			for (String id : test) {
+					auxList.add(id);
+				}
+    			
+    			while(num > 0){
+    				
+    				int rdm = r.nextInt(test.size()-1);
+    				
+    				String keyword = auxList.get(rdm);
+    				cli.set(keyword, generateRandomStr(100));
 
     				cli.del(keyword);
-
+    				auxList.remove(rdm);
+    				
+    				num--;
     			}
+    			
     			
     		} catch (Exception e) {
     			System.out.println("An error occurred while decrypting row...");
