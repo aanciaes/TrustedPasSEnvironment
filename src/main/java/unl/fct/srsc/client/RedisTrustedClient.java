@@ -184,6 +184,7 @@ public class RedisTrustedClient {
 
             cli.set(key, rowIntegrity);
             cli.sadd(String.valueOf(name.hashCode()), key);
+            
 
             test.add(String.valueOf(name.hashCode()));
 
@@ -242,6 +243,8 @@ public class RedisTrustedClient {
         }
         return rst;
     }
+    
+    
 
     private static boolean checkIntegrity(String row) throws DecoderException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException {
 
@@ -396,10 +399,24 @@ public class RedisTrustedClient {
     			while(num > 0){
     				
     				int rdm = r.nextInt(test.size()-1);
-    				
     				String keyword = test.get(rdm);
-    				cli.set(keyword, generateRandomStr(100));
+    				String uncheckedRow = cli.get(keyword);
+    				if (checkIntegrity(uncheckedRow)) {
+                            //split to remove integrity field
+                            String[] splitted = uncheckedRow.split("\\:");
 
+                            String row = decryptRow(splitted[0]);
+                            String authenticRow = checkAuthenticity(row);
+                            
+                            for(int i = 1; i < splitted.length; i++){
+                            	
+                            	cli.srem(String.valueOf(splitted[i].hashCode()), keyword);
+                            	
+                            }
+    				}
+    				
+    				cli.set(keyword, generateRandomStr(100));
+    				
     				cli.del(keyword);
     				test.remove(rdm);
     				
