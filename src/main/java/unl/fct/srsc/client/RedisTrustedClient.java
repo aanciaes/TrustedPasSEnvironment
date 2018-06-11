@@ -42,29 +42,35 @@ public class RedisTrustedClient {
 
                 BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
-                System.out.println("Populating with " + Integer.parseInt(args[0]) +" elements!");
-                processPopulate(Integer.parseInt(args[0]));
+                //System.out.println("Populating with " + Integer.parseInt(args[0]) +" elements!");
+                //processPopulate(Integer.parseInt(args[0]));
 
 
                 System.out.println("-------------- Start Benchmark ------------");
 
-                System.out.println("Set 300 entries");
+                System.out.println("Set 1000 entries");
                 long setStart = System.currentTimeMillis();
-                processPopulate(300);
+                processPopulate(1000);
                 long setTime = System.currentTimeMillis() - setStart;
 
-                System.out.println("Get 400 entries" + "\n");
+                System.out.println("Get 1000 entries");
                 long getStart = System.currentTimeMillis();
                 getAll();
                 long getTime = System.currentTimeMillis() - getStart;
 
-                //System.out.println("Remove 300 entries");
-                //long removeStart = System.currentTimeMillis();
-                //removeAll(300);
-                //long removeTime = System.currentTimeMillis() - removeStart;
+                System.out.println("Remove 1000 entries" + "\n");
+                long removeStart = System.currentTimeMillis();
+                remove(1000);
+                long removeTime = System.currentTimeMillis() - removeStart;
 
-                System.out.println("Total set time -------> " + setTime + "ms\n");
-                System.out.println("Total get time -------> " + getTime + "ms\n");
+                System.out.println("Total set time -------> " + setTime + "ms");
+                System.out.println("Total get time -------> " + getTime + "ms");
+                System.out.println("Total remove time -------> " + removeTime + "ms\n");
+
+                System.out.println("Total time  -------> " + (removeTime + getTime + setTime) + "ms");
+                System.out.println("Total operations  -------> 1000 ops");
+                System.out.println("Total operations per second -------> " + (removeTime + getTime + setTime) + "ops/s\n");
+
                 /*String command = "";
 
                 while (!(command = br.readLine().trim()).equals("exit")) {
@@ -352,7 +358,7 @@ public class RedisTrustedClient {
     }
         private static long getAll() throws InvalidKeyException, DecoderException, BadPaddingException, IllegalBlockSizeException, NoSuchProviderException, NoSuchAlgorithmException {
 
-            //System.out.println("Number of entries: " + test.size());
+            System.out.println("Number of entries: " + test.size());
 
             cipher.init(Cipher.DECRYPT_MODE, keySecret);
 
@@ -384,23 +390,21 @@ public class RedisTrustedClient {
             return System.currentTimeMillis() - startTime;
         }
         
-        private void remove(int num) throws Exception{
+        private static void remove(int num) throws Exception{
 
     		try{
     			cipher.init(Cipher.DECRYPT_MODE,  keySecret);	
-    			
-    			long startTime = System.currentTimeMillis();
-    			
+
     			Random r = new Random();
     			
     			while(num > 0){
     				
-    				int rdm = r.nextInt(test.size()-1);
-    				
-    				String keyword = test.get(rdm);
-    				cli.set(keyword, generateRandomStr(100));
+    				int rdm = r.nextInt(test.size());
 
-    				cli.del(keyword);
+    				String keyword = test.get(rdm);
+                    String rndString = generateRandomStr(100);
+    				cli.set(keyword, rndString);
+    				cli. del(keyword);
     				test.remove(rdm);
     				
     				num--;
@@ -414,7 +418,7 @@ public class RedisTrustedClient {
 
     	}
 
-    	private String generateRandomStr(int size){
+    	private static String generateRandomStr(int size){
     		String str = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     		Random r = new Random();
     		StringBuilder s = new StringBuilder(size);
