@@ -20,388 +20,401 @@ import java.util.*;
 
 public class RedisTrustedClient {
 
-	private static final String REDIS_SERVER = "REDIS_SERVER";
-	private static final String LOCALHOST = "localhost";
+    private static final String REDIS_SERVER = "REDIS_SERVER";
+    private static final String LOCALHOST = "localhost";
 
-	private static SecurityConfig securityConfig;
-	private static TpmHostsConfig tpmHostsConfig;
-	private static Jedis cli = null;
+    private static SecurityConfig securityConfig;
+    private static TpmHostsConfig tpmHostsConfig;
+    private static Jedis cli = null;
 
-	private static Set<String> test = new HashSet<String>();
+    private static Set<String> test = new HashSet<String>();
 
-	private static Key keySecret = null;
-	private static KeyPair keyPair = null;
+    private static Key keySecret = null;
+    private static KeyPair keyPair = null;
 
-	private static Cipher cipher = null;
+    private static Cipher cipher = null;
 
-	public static void main(String[] args) {
-		try {
-			setup();
+    public static void main(String[] args) {
+        try {
+            setup();
 
-			if(checkTpm ()) {
+            if(checkTpm ()) {
 
-				BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-				String command = "";
+                BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
-				while (!(command = br.readLine().trim()).equals("exit")) {
+                System.out.println("Populating with " + Integer.parseInt(args[0]) +" elements!");
+                processPopulate(Integer.parseInt(args[0]));
 
-					if (command.equals("insert")) {
-						processInsert(br);
-					}
-					if (command.equals("get")) {
-						processGetByName(br);
-					}
-					if (command.equals("populate")) {
-						processPopulate(br);
-					}
 
-					if (command.equals("getAll")) {
-						printAllEntries();
-					}
-				}
-			}
+                System.out.println("-------------- Start Benchmark ------------");
 
-			System.out.println("Bye");
-		} catch (JedisConnectionException uh) {
-			System.out.println("REDIS_SERVER didn't respond.");
-			System.exit(1);
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
-	}
+                System.out.println("Set 300 entries");
+                long setStart = System.currentTimeMillis();
+                processPopulate(300);
+                long setTime = System.currentTimeMillis() - setStart;
 
+                System.out.println("Get 400 entries" + "\n");
+                long getStart = System.currentTimeMillis();
+                getAll();
+                long getTime = System.currentTimeMillis() - getStart;
 
-	private static void setup() throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException {
-		String redisServer = System.getenv(REDIS_SERVER);
-		redisServer = redisServer == null ? LOCALHOST : redisServer;
+                //System.out.println("Remove 300 entries");
+                //long removeStart = System.currentTimeMillis();
+                //removeAll(300);
+                //long removeTime = System.currentTimeMillis() - removeStart;
 
-		//Configurations
-		Configurations confs = Utils.readFromConfig();
-		securityConfig = confs.getSecurityConfig();
-		tpmHostsConfig = confs.getTpmHosts();
+                System.out.println("Total set time -------> " + setTime + "ms\n");
+                System.out.println("Total get time -------> " + getTime + "ms\n");
+                /*String command = "";
 
-		cli = new Jedis(redisServer, 6379);
-		if(securityConfig.getRedisPassword() != null){
-			cli.auth(securityConfig.getRedisPassword());
-		}
-		cli.ping(); //pinging database
+                while (!(command = br.readLine().trim()).equals("exit")) {
 
-		System.out.println(REDIS_SERVER + " : " + redisServer);
+                    if (command.equals("insert")) {
+                        processInsert(br);
+                    }
+                    if (command.equals("get")) {
+                        processGetByName(br);
+                    }
+                    if (command.equals("populate")) {
+                        processPopulate(br);
+                    }
 
-		cipher = Cipher.getInstance(securityConfig.getCiphersuite(), securityConfig.getProvider());
+                    if (command.equals("getAll")) {
+                        printAllEntries();
+                    }
+                }
+                */
+            }
 
-		keySecret = Utils.getKeyFromKeyStore(securityConfig);
-		keyPair = Utils.getKeyPairFromKeyStore(securityConfig);
-	}
+            System.out.println("Bye");
+        } catch (JedisConnectionException uh) {
+            System.out.println("REDIS_SERVER didn't respond.");
+            System.exit(1);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
 
 
-	private static boolean checkTpm () {
-		String redisServer = System.getenv(REDIS_SERVER);
-		redisServer = redisServer == null ? LOCALHOST : redisServer;
+    private static void setup() throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException {
+        String redisServer = System.getenv(REDIS_SERVER);
+        redisServer = redisServer == null ? LOCALHOST : redisServer;
 
-		TpmConnector tpmConnector = new TpmConnector(redisServer, tpmHostsConfig);
+        //Configurations
+        Configurations confs = Utils.readFromConfig();
+        securityConfig = confs.getSecurityConfig();
+        tpmHostsConfig = confs.getTpmHosts();
 
-		return tpmConnector.checkTpm();
-	}
+        cli = new Jedis(redisServer, 6379);
+        if(securityConfig.getRedisPassword() != null){
+            cli.auth(securityConfig.getRedisPassword());
+        }
+        cli.ping(); //pinging database
 
-	private static void processInsert(BufferedReader br) throws IOException {
-		System.out.println("Insert First Name:");
-		String name = br.readLine().trim();
+        System.out.println(REDIS_SERVER + " : " + redisServer);
 
-		System.out.println("\nInsert Last Name:");
-		String lastName = br.readLine().trim();
+        cipher = Cipher.getInstance(securityConfig.getCiphersuite(), securityConfig.getProvider());
 
-		System.out.println("\nInsert Salary:");
-		String salary = br.readLine().trim();
+        keySecret = Utils.getKeyFromKeyStore(securityConfig);
+        keyPair = Utils.getKeyPairFromKeyStore(securityConfig);
+    }
 
-		boolean inserted = jedisInsert(name, lastName, salary);
 
-		System.out.println("Insert " + (inserted ? "Success" : "Failure"));
-		System.out.println("-----------\n");
-	}
+    private static boolean checkTpm () {
+        String redisServer = System.getenv(REDIS_SERVER);
+        redisServer = redisServer == null ? LOCALHOST : redisServer;
 
-	private static void processGetByName(BufferedReader br) throws IOException {
-		System.out.println("Search by Name:");
-		String name = br.readLine().trim();
+        TpmConnector tpmConnector = new TpmConnector(redisServer, tpmHostsConfig);
 
-		try {
-			Set<String> rst = jedisGetByName(name);
+        return tpmConnector.checkTpm();
+    }
 
-			prettyPrint(rst);
+    private static void processInsert(BufferedReader br) throws IOException {
+        System.out.println("Insert First Name:");
+        String name = br.readLine().trim();
 
-		} catch (Exception e) {
-			System.out.println("An error occured...");
-			e.printStackTrace();
-		}
-	}
+        System.out.println("\nInsert Last Name:");
+        String lastName = br.readLine().trim();
 
-	private static boolean jedisInsert(String name, String lastName, String salary) {
+        System.out.println("\nInsert Salary:");
+        String salary = br.readLine().trim();
 
-		String row = String.format("%s:%s:%s", name, lastName, salary);
-		row = signRow(row);
+        boolean inserted = jedisInsert(name, lastName, salary);
 
-		try {
-			cipher.init(Cipher.ENCRYPT_MODE, keySecret);
+        System.out.println("Insert " + (inserted ? "Success" : "Failure"));
+        System.out.println("-----------\n");
+    }
 
-			byte[] ecryptedCore = cipher.doFinal(row.getBytes());
+    private static void processGetByName(BufferedReader br) throws IOException {
+        System.out.println("Search by Name:");
+        String name = br.readLine().trim();
 
-			String key = String.valueOf(row.hashCode());
-			System.out.println("Key: " + key);
+        try {
+            Set<String> rst = jedisGetByName(name);
 
-			row = Hex.encodeHexString(ecryptedCore);
+            prettyPrint(rst);
 
-			Mac hMac = Mac.getInstance(securityConfig.getHmac(), securityConfig.getProvider());
-			hMac.init(keySecret);
-			String mac = Hex.encodeHexString(hMac.doFinal(row.getBytes()));
+        } catch (Exception e) {
+            System.out.println("An error occured...");
+            e.printStackTrace();
+        }
+    }
 
-			String rowIntegrity = String.format("%s:%s", row, mac);
+    private static boolean jedisInsert(String name, String lastName, String salary) {
 
-			cli.set(key, rowIntegrity);
-			cli.sadd(String.valueOf(name.hashCode()), key);
+        String row = String.format("%s:%s:%s", name, lastName, salary);
+        row = signRow(row);
 
-			test.add(String.valueOf(name.hashCode()));
+        try {
+            cipher.init(Cipher.ENCRYPT_MODE, keySecret);
 
-			return true;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
+            byte[] ecryptedCore = cipher.doFinal(row.getBytes());
 
-	private static String signRow(String row) {
+            String key = String.valueOf(row.hashCode());
+            //System.out.println("Key: " + key);
 
-		try {
-			Signature signature = Signature.getInstance(securityConfig.getSignatureAlgorithm(),
-					securityConfig.getSignatureAlgProvider());
+            row = Hex.encodeHexString(ecryptedCore);
 
-			signature.initSign(keyPair.getPrivate(), Utils.createFixedRandom());
+            Mac hMac = Mac.getInstance(securityConfig.getHmac(), securityConfig.getProvider());
+            hMac.init(keySecret);
+            String mac = Hex.encodeHexString(hMac.doFinal(row.getBytes()));
 
-			signature.update(row.getBytes());
-			byte[] sigBytes = signature.sign();
+            String rowIntegrity = String.format("%s:%s", row, mac);
 
-			return String.format("%s:%s", row, Hex.encodeHexString(sigBytes));
+            cli.set(key, rowIntegrity);
+            cli.sadd(String.valueOf(name.hashCode()), key);
 
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
+            test.add(String.valueOf(name.hashCode()));
 
-	private static Set<String> jedisGetByName(String name) throws InvalidKeyException, DecoderException, BadPaddingException, IllegalBlockSizeException, NoSuchProviderException, NoSuchAlgorithmException {
-		Set<String> rst = new HashSet();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
-		String key = String.valueOf(name.hashCode());
+    private static String signRow(String row) {
 
-		Set<String> indexes = cli.smembers(key);
-		System.out.println("Number of entries: " + indexes.size());
+        try {
+            Signature signature = Signature.getInstance(securityConfig.getSignatureAlgorithm(),
+                    securityConfig.getSignatureAlgProvider());
 
-		cipher.init(Cipher.DECRYPT_MODE, keySecret);
+            signature.initSign(keyPair.getPrivate(), Utils.createFixedRandom());
 
-		for (String id : indexes) {
-			String uncheckedRow = cli.get(id);
+            signature.update(row.getBytes());
+            byte[] sigBytes = signature.sign();
 
-			if (checkIntegrity(uncheckedRow)) {
-				try {
-					//split to remove integrity field
-					String[] splitted = uncheckedRow.split("\\:");
+            return String.format("%s:%s", row, Hex.encodeHexString(sigBytes));
 
-					String row = decryptRow(splitted[0]);
-					String authenticRow = checkAuthenticity(row);
-					rst.add(authenticRow);
-				} catch (Exception e) {
-					System.out.println("An error occurred while decrypting row...");
-					e.printStackTrace();
-				}
-			}
-		}
-		return rst;
-	}
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
-	private static boolean checkIntegrity(String row) throws DecoderException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException {
+    private static Set<String> jedisGetByName(String name) throws InvalidKeyException, DecoderException, BadPaddingException, IllegalBlockSizeException, NoSuchProviderException, NoSuchAlgorithmException {
+        Set<String> rst = new HashSet();
 
-		String[] columns = row.split("\\:");
+        String key = String.valueOf(name.hashCode());
 
-		Mac hMac = Mac.getInstance(securityConfig.getHmac(), securityConfig.getProvider());
-		hMac.init(keySecret);
+        Set<String> indexes = cli.smembers(key);
+        System.out.println("Number of entries: " + indexes.size());
 
-		byte[] integrity = Hex.decodeHex(columns[1]);
+        cipher.init(Cipher.DECRYPT_MODE, keySecret);
 
-		if (!MessageDigest.isEqual(hMac.doFinal(columns[0].getBytes()), integrity)) {
-			System.out.println("Integrity Broken");
-			return false;
-		}
+        for (String id : indexes) {
+            String uncheckedRow = cli.get(id);
 
-		System.out.println("Integrity OK");
-		return true;
-	}
+            if (checkIntegrity(uncheckedRow)) {
+                try {
+                    //split to remove integrity field
+                    String[] splitted = uncheckedRow.split("\\:");
 
-	private static String checkAuthenticity(String row) {
-		String[] splitted = row.split("\\:");
+                    String row = decryptRow(splitted[0]);
+                    String authenticRow = checkAuthenticity(row);
+                    rst.add(authenticRow);
+                } catch (Exception e) {
+                    System.out.println("An error occurred while decrypting row...");
+                    e.printStackTrace();
+                }
+            }
+        }
+        return rst;
+    }
 
-		//TODO: make it better
-		String realRow = String.format("%s:%s:%s", splitted[0], splitted[1], splitted[2]);
-		String signatureField = splitted[3];
+    private static boolean checkIntegrity(String row) throws DecoderException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException {
 
-		try {
-			Signature signature = Signature.getInstance(securityConfig.getSignatureAlgorithm(),
-					securityConfig.getSignatureAlgProvider());
+        String[] columns = row.split("\\:");
 
-			signature.initVerify(keyPair.getPublic());
+        Mac hMac = Mac.getInstance(securityConfig.getHmac(), securityConfig.getProvider());
+        hMac.init(keySecret);
 
-			signature.update(realRow.getBytes());
+        byte[] integrity = Hex.decodeHex(columns[1]);
 
-			if (signature.verify(Hex.decodeHex(signatureField))) {
-				System.out.println("Assinatura validada - reconhecida");
-				return realRow;
-			} else {
-				System.out.println("Assinatura nao reconhecida");
-			}
+        if (!MessageDigest.isEqual(hMac.doFinal(columns[0].getBytes()), integrity)) {
+            System.out.println("Integrity Broken");
+            return false;
+        }
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
+        //System.out.println("Integrity OK");
+        return true;
+    }
 
-	private static String decryptRow(String row) throws DecoderException, BadPaddingException, IllegalBlockSizeException {
-		return new String(cipher.doFinal(Hex.decodeHex(row)));
-	}
+    private static String checkAuthenticity(String row) {
+        String[] splitted = row.split("\\:");
 
-	private static void prettyPrint(Set<String> rows) {
+        //TODO: make it better
+        String realRow = String.format("%s:%s:%s", splitted[0], splitted[1], splitted[2]);
+        String signatureField = splitted[3];
 
-		System.out.println("-----------------------------------------------------");
-		System.out.println("|    FirstName    |    LastName    |      Salary    |");
-		System.out.println("-----------------------------------------------------");
+        try {
+            Signature signature = Signature.getInstance(securityConfig.getSignatureAlgorithm(),
+                    securityConfig.getSignatureAlgProvider());
 
-		for (String row : rows) {
-			System.out.println(row);
-		}
-	}
+            signature.initVerify(keyPair.getPublic());
 
-	private static void processPopulate(BufferedReader br) throws BadPaddingException {
-		System.out.println("Insert number of elements:");
+            signature.update(realRow.getBytes());
 
-		Faker faker = new Faker();
+            if (signature.verify(Hex.decodeHex(signatureField))) {
+                //System.out.println("Assinatura validada - reconhecida");
+                return realRow;
+            } else {
+                System.out.println("Assinatura nao reconhecida");
+            }
 
-		try {
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
-			int number = Integer.parseInt(br.readLine().trim());
-			long time = System.currentTimeMillis();
-			while(number > 0){
+    private static String decryptRow(String row) throws DecoderException, BadPaddingException, IllegalBlockSizeException {
+        return new String(cipher.doFinal(Hex.decodeHex(row)));
+    }
 
-				String firstName = faker.name().firstName();
-				String lastName = faker.name().lastName();
-				Random rand = new Random();
-				int integerValue = rand.nextInt(200000);
-				String value = String.valueOf(integerValue);
+    private static void prettyPrint(Set<String> rows) {
 
-				jedisInsert(firstName, lastName, value);
+        System.out.println("-----------------------------------------------------");
+        System.out.println("|    FirstName    |    LastName    |      Salary    |");
+        System.out.println("-----------------------------------------------------");
 
-				number--;
-			}
+        for (String row : rows) {
+            System.out.println(row);
+        }
+    }
 
-			System.out.println( "time -> " + (System.currentTimeMillis() - time) + "ms");
+    private static void processPopulate(int number) throws BadPaddingException {
 
-			System.out.println("DOne");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+        Faker faker = new Faker();
 
-	}
+        while(number > 0){
 
-	private static void printAllEntries() {
+            String firstName = faker.name().firstName();
+            String lastName = faker.name().lastName();
+            Random rand = new Random();
+            int integerValue = rand.nextInt(200000);
+            String value = String.valueOf(integerValue);
 
-		long getTime = 0;
-		try {
-			getTime = getAll();
+            jedisInsert(firstName, lastName, value);
 
-		} catch (InvalidKeyException e) {
-			e.printStackTrace();
+            number--;
+        }
 
-		} catch (DecoderException e) {
-			e.printStackTrace();
+    }
 
-		} catch (BadPaddingException e) {
-			e.printStackTrace();
+    private static void printAllEntries() {
 
-		} catch (IllegalBlockSizeException e) {
-			e.printStackTrace();
+        long getTime = 0;
+        try {
+            getTime = getAll();
 
-		} catch (NoSuchProviderException e) {
-			e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
 
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		}
-		System.out.println("Total get Time -> " + getTime + "ms");
+        } catch (DecoderException e) {
+            e.printStackTrace();
 
-	}
-	private static long getAll() throws InvalidKeyException, DecoderException, BadPaddingException, IllegalBlockSizeException, NoSuchProviderException, NoSuchAlgorithmException {
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
 
-		System.out.println("Number of entries: " + test.size());
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
 
-		cipher.init(Cipher.DECRYPT_MODE, keySecret);
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
 
-		long startTime = System.currentTimeMillis();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Total get Time -> " + getTime + "ms");
 
-		for (String id : test) {
+    }
+        private static long getAll() throws InvalidKeyException, DecoderException, BadPaddingException, IllegalBlockSizeException, NoSuchProviderException, NoSuchAlgorithmException {
 
-			Set<String> list = cli.smembers(id);
+            //System.out.println("Number of entries: " + test.size());
 
-			for (String innerId : list) {
+            cipher.init(Cipher.DECRYPT_MODE, keySecret);
 
-				String uncheckedRow = cli.get(innerId);
+            long startTime = System.currentTimeMillis();
 
-				if (checkIntegrity(uncheckedRow)) {
-					try {
-						//split to remove integrity field
-						String[] splitted = uncheckedRow.split("\\:");
+            for (String id : test) {
 
-						String row = decryptRow(splitted[0]);
-						String authenticRow = checkAuthenticity(row);
+                Set<String> list = cli.smembers(id);
 
-					} catch (Exception e) {
-						System.out.println("An error occurred while decrypting row...");
-						e.printStackTrace();
-					}
-				}
-			}
-		}
-		return System.currentTimeMillis() - startTime;
-	}
+                for (String innerId : list) {
 
-	private void delete(String keyword) throws Exception{
+                    String uncheckedRow = cli.get(innerId);
 
-		System.out.println("Deleting " + keyword + " from redis");
+                    if (checkIntegrity(uncheckedRow)) {
+                        try {
+                            //split to remove integrity field
+                            String[] splitted = uncheckedRow.split("\\:");
 
-		cipher.init(Cipher.DECRYPT_MODE,  keySecret);
+                            String row = decryptRow(splitted[0]);
+                            String authenticRow = checkAuthenticity(row);
 
-		try{
-			Random r = new Random();
+                        } catch (Exception e) {
+                            System.out.println("An error occurred while decrypting row...");
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+            return System.currentTimeMillis() - startTime;
+        }
+        
+        private void remove(String keyword) throws Exception{
 
-			if(cli.exists(keyword)){
+    		System.out.println("Deleting " + keyword + " from redis");
 
-				String aux = randomString(1000);
-				cli.set(keyword, aux);
+    		cipher.init(Cipher.DECRYPT_MODE,  keySecret);
 
-				cli.del(keyword);
+    		try{
+    			Random r = new Random();
 
-			}
-			
-		} catch (Exception e) {
-			System.out.println("An error occurred while decrypting row...");
-			e.printStackTrace();
-		}
+    			if(cli.exists(keyword)){
 
-	}
+    				String aux = generateRandomStr(100);
+    				cli.set(keyword, aux);
 
-	private String randomString(int size){
-		String str = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-		Random r = new Random();
-		StringBuilder s = new StringBuilder(size);
-		for(int i = 0; i < size; i++) 
-			s.append( str.charAt(r.nextInt(str.length())) );
-		return s.toString();
-	}
+    				cli.del(keyword);
+
+    			}
+    			
+    		} catch (Exception e) {
+    			System.out.println("An error occurred while decrypting row...");
+    			e.printStackTrace();
+    		}
+
+    	}
+
+    	private String generateRandomStr(int size){
+    		String str = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    		Random r = new Random();
+    		StringBuilder s = new StringBuilder(size);
+    		for(int i = 0; i < size; i++) 
+    			s.append( str.charAt(r.nextInt(str.length())) );
+    		return s.toString();
+    	}
 }
