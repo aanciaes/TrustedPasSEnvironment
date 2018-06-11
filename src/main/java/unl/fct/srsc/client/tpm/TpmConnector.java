@@ -77,6 +77,8 @@ public class TpmConnector {
         stateConfig.add(line);
         line="root ps";
         stateConfig.add(line);
+        line="fb34c1c401087ba9d5505255747534e4a62e3855162966d7c7b092b79bbba2fa";
+        stateConfig.add(line);
 
     }
 
@@ -180,8 +182,9 @@ public class TpmConnector {
     private boolean checkValidState(List<String> processList) {
         int n = 0;
 
-        for(String line : stateConfig){
-            System.out.println("IS THIS -> " + line + " Equal to this -> " + processList.get(n++));
+        for(String line : processList){
+            System.out.println("IS THIS -> " + line + " Equal to this -> " + stateConfig.get(n++));
+
            if(!processList.get(n).equals(line)){
                return false;
            }
@@ -196,10 +199,8 @@ public class TpmConnector {
         String[] lines = processString.split("#");
 
         for(String line: lines){
-            line = line.replaceAll("&", " ");
-            output.add(line);
-
-            System.out.println(line);
+                line = line.replaceAll("&", " ");
+                output.add(line);
         }
 
         return output;

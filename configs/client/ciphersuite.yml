@@ -11,7 +11,7 @@ securityConfig:
   signatureAlgProvider: SunRsaSign
   signatureKeyName: asymkey
   signatureKeyPassword: P4s5w0rd
-  redisPassword: foobared
+  redisPassword:
 
 tpmHosts:
   vmsHost: localhost

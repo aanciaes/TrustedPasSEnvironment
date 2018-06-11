@@ -92,6 +92,7 @@ public class TpmTLSServer {
                     w.newLine();
                     w.flush();
                 }
+
                 w.close();
                 r.close();
                 c.close();
@@ -165,7 +166,7 @@ public class TpmTLSServer {
         String result = "";
 
         for (String line : list) {
-            result += "#" + line;
+            result +=  line + "#";
         }
         return result.getBytes();
     }
