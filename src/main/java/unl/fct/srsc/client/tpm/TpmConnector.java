@@ -69,11 +69,13 @@ public class TpmConnector {
     }
 
     private void setStateConfig() {
-        String line = "root sh";
+        String line = "bash";
         stateConfig.add(line);
-        line = "root redis-server";
+        line = "java";
         stateConfig.add(line);
-        line = "root java";
+        line = "ps";
+        stateConfig.add(line);
+        line = "redis redis-server";
         stateConfig.add(line);
         line="root ps";
         stateConfig.add(line);
@@ -183,9 +185,9 @@ public class TpmConnector {
         int n = 0;
 
         for(String line : processList){
-            System.out.println("IS THIS -> " + line + " Equal to this -> " + stateConfig.get(n++));
 
-           if(!processList.get(n).equals(line)){
+           if(!processList.get(n++).trim().equals(line.trim())){
+               System.out.println("This - > " + processList.get(n).trim() + " equal to -> " + line.trim());
                return false;
            }
 

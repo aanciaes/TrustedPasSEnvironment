@@ -10,7 +10,7 @@ public class TpmStateData {
     public static List<String> getState() throws IOException {
 
         List<String> result = new ArrayList<String>();
-        Process process = Runtime.getRuntime().exec("ps -o user,comm --no-heading");
+        Process process = Runtime.getRuntime().exec("ps -o comm --no-heading");
         result.addAll(print(process));
 
         process = Runtime.getRuntime().exec("docker ps");
@@ -19,7 +19,7 @@ public class TpmStateData {
         process = Runtime.getRuntime().exec("docker exec -t " + id + " sha256sum /usr/local/bin/redis-server");
         result.addAll(clear(print(process)));
 
-        process = Runtime.getRuntime().exec("docker exec -t " + id + " ps -fe");
+        process = Runtime.getRuntime().exec("docker exec -t " + id + " ps -eo user,comm --no-heading");
         result.addAll(print(process));
 
         return result;
