@@ -4,8 +4,9 @@ import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import unl.fct.srsc.client.config.Configurations;
+import unl.fct.srsc.client.config.GosTpm;
 import unl.fct.srsc.client.config.SecurityConfig;
-import unl.fct.srsc.client.config.TpmHostsConfig;
+import unl.fct.srsc.client.config.VmsTpm;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,7 +24,8 @@ public class Utils {
         TypeDescription configDescription = new TypeDescription(Configurations.class);
 
         configDescription.addPropertyParameters("securityConfig", SecurityConfig.class);
-        configDescription.addPropertyParameters("tpmHosts", TpmHostsConfig.class);
+        configDescription.addPropertyParameters("vmsTpm", VmsTpm.class);
+        configDescription.addPropertyParameters("gosTpm", GosTpm.class);
         constructor.addTypeDescription(configDescription);
 
         Yaml yaml = new Yaml(constructor);

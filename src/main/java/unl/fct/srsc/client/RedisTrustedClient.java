@@ -6,15 +6,15 @@ import org.apache.commons.codec.binary.Hex;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import unl.fct.srsc.client.config.Configurations;
+import unl.fct.srsc.client.config.GosTpm;
 import unl.fct.srsc.client.config.SecurityConfig;
-import unl.fct.srsc.client.config.TpmHostsConfig;
+import unl.fct.srsc.client.config.VmsTpm;
 import unl.fct.srsc.client.tpm.TpmConnector;
 import unl.fct.srsc.client.utils.Utils;
 
 import javax.crypto.*;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URI;
 import java.security.*;
 import java.util.*;
 
@@ -25,7 +25,8 @@ public class RedisTrustedClient {
     private static final String REDIS_SERVER = "REDIS_SERVER";
 
     private static SecurityConfig securityConfig;
-    private static TpmHostsConfig tpmHostsConfig;
+    private static VmsTpm vmsTpm;
+    private static GosTpm gosTpm;
 
     private static String redisServer;
     private static Jedis cli = null;
@@ -107,7 +108,8 @@ public class RedisTrustedClient {
         //Configurations
         Configurations confs = Utils.readFromConfig();
         securityConfig = confs.getSecurityConfig();
-        tpmHostsConfig = confs.getTpmHosts();
+        vmsTpm = confs.getVmsTpm();
+        gosTpm = confs.getGosTpm();
 
         cipher = Cipher.getInstance(securityConfig.getCiphersuite(), securityConfig.getProvider());
 
@@ -129,7 +131,7 @@ public class RedisTrustedClient {
 
 
     private static boolean checkTpm() {
-        TpmConnector tpmConnector = new TpmConnector(tpmHostsConfig);
+        TpmConnector tpmConnector = new TpmConnector(vmsTpm);
 
         return tpmConnector.checkTpm();
     }

@@ -2,7 +2,7 @@ package unl.fct.srsc.client.tpm;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
-import unl.fct.srsc.client.config.TpmHostsConfig;
+import unl.fct.srsc.client.config.TpmConfig;
 import unl.fct.srsc.tpm.Utils;
 
 import javax.crypto.*;
@@ -37,7 +37,7 @@ public class TpmConnector {
 
     private static final String ERROR_MESSAGE = "Error Message";
 
-    private TpmHostsConfig tpmHostsConfig;
+    private TpmConfig tpmConfig;
 
     // Parametro para o gerador do Grupo de Cobertura de P
     private static BigInteger g512 = new BigInteger(
@@ -60,8 +60,8 @@ public class TpmConnector {
     private KeyPair pair;
     private List<String> stateConfig;
 
-    public TpmConnector(TpmHostsConfig tpmHostsConfig) {
-        this.tpmHostsConfig = tpmHostsConfig;
+    public TpmConnector(TpmConfig tpmConfig) {
+        this.tpmConfig = tpmConfig;
         this.stateConfig = new ArrayList<String>();
         setStateConfig();
     }
@@ -87,8 +87,8 @@ public class TpmConnector {
         SSLSocketFactory f =
                 (SSLSocketFactory) SSLSocketFactory.getDefault();
         try {
-            SSLSocket c = (SSLSocket) f.createSocket(this.tpmHostsConfig.getVmsHost(),
-                    Integer.parseInt(this.tpmHostsConfig.getVmsPort()));
+            SSLSocket c = (SSLSocket) f.createSocket(this.tpmConfig.getHost(),
+                    Integer.parseInt(this.tpmConfig.getPort()));
 
             c.startHandshake();
 
@@ -127,7 +127,7 @@ public class TpmConnector {
         String nonce = Utils.randomNonce();
 
         return String.format("%s|%s|%s|%s|%s|%s", REQUEST_CODE, pubDH, nonce,
-                tpmHostsConfig.getCiphersuite(), tpmHostsConfig.getProvider(), tpmHostsConfig.getKeySize());
+                tpmConfig.getCiphersuite(), tpmConfig.getProvider(), tpmConfig.getKeySize());
     }
 
     private void startDiffieHellman() throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException {
@@ -158,13 +158,13 @@ public class TpmConnector {
                     keyAgree.doPhase(p, true);
 
                     byte[] agreedKey = keyAgree.generateSecret();
-                    int keySize = Integer.parseInt(tpmHostsConfig.getKeySize()) / 8;
+                    int keySize = Integer.parseInt(tpmConfig.getKeySize()) / 8;
                     byte[] agreedCroppedKey = new byte[keySize];
                     System.arraycopy(agreedKey, 0, agreedCroppedKey, 0, keySize);
 
-                    String alg = tpmHostsConfig.getCiphersuite().split("\\/")[0];
+                    String alg = tpmConfig.getCiphersuite().split("\\/")[0];
 
-                    Cipher c = Cipher.getInstance(tpmHostsConfig.getCiphersuite(), tpmHostsConfig.getProvider());
+                    Cipher c = Cipher.getInstance(tpmConfig.getCiphersuite(), tpmConfig.getProvider());
                     c.init(Cipher.DECRYPT_MODE, new SecretKeySpec(agreedCroppedKey, alg));
 
                     byte[] decryptedCore = c.doFinal(Hex.decodeHex(res[ATTESTATION_STATUS]));

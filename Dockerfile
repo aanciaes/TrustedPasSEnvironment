@@ -29,7 +29,7 @@ RUN chmod 640 /etc/stunnel/private.pem
 ADD . /home/project
 WORKDIR /home/project
 
-CMD sed -i "s/connect = .*/connect = $REDIS_SERVER:$STUNNEL_PORT/" /etc/stunnel/redis-client.conf \
+CMD sed -i "s/connect = .*/connect = $STUNNEL_HOST:$STUNNEL_PORT/" /etc/stunnel/redis-client.conf \
     && service stunnel4 start \
     && mvn clean install \
     && java -Djavax.net.ssl.trustStore=configs/client/clientTrustStore \

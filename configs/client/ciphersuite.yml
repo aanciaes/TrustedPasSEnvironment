@@ -14,11 +14,17 @@ securityConfig:
   redisServer: 192.168.56.101
   redisPassword:
 
-tpmHosts:
-  vmsHost: 192.168.56.101
-  vmsPort: 9999
-  gosHost: locahost
-  gosPort: 8888
+
+vmsTpm:
+  host: 192.168.56.101
+  port: 9999
+  ciphersuite: aes/ECB/PKCS5Padding
+  keySize: 256
+  provider: SunJCE
+
+gosTpm:
+  host: locahost
+  port: 8888
   ciphersuite: aes/ECB/PKCS5Padding
   keySize: 256
   provider: SunJCE
