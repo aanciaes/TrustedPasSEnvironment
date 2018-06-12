@@ -18,7 +18,7 @@ ENV MAVEN_HOME /usr/share/maven
 ENV MAVEN_CONFIG "$USER_HOME_DIR/.m2"
 
 RUN apt-get update \
-     && apt-get install -y stunnel4 && apt-get install -y redis-tools \
+     && apt-get install -y stunnel4 \
      && sed -i 's/ENABLED=0/ENABLED=1/' /etc/default/stunnel4
 
 ADD ./configs/stunnel/redis-client.conf /etc/stunnel/redis-client.conf
@@ -29,7 +29,8 @@ RUN chmod 640 /etc/stunnel/private.pem
 ADD . /home/project
 WORKDIR /home/project
 
-CMD service stunnel4 start \
+CMD sed -i "s/connect = .*/connect = $REDIS_SERVER:$STUNNEL_PORT/" /etc/stunnel/redis-client.conf \
+    && service stunnel4 start \
     && mvn clean install \
     && java -Djavax.net.ssl.trustStore=configs/client/clientTrustStore \
         -cp .:target/TrustedPasS-1.0-jar-with-dependencies.jar \
