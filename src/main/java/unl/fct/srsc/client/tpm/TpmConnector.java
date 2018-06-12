@@ -2,7 +2,7 @@ package unl.fct.srsc.client.tpm;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
-import unl.fct.srsc.client.config.TpmHostsConfig;
+import unl.fct.srsc.client.config.TpmConfig;
 import unl.fct.srsc.tpm.Utils;
 
 import javax.crypto.*;
@@ -19,6 +19,8 @@ import java.io.OutputStreamWriter;
 import java.math.BigInteger;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TpmConnector {
 
@@ -35,8 +37,7 @@ public class TpmConnector {
 
     private static final String ERROR_MESSAGE = "Error Message";
 
-    private String redisServer;
-    private TpmHostsConfig tpmHostsConfig;
+    private TpmConfig tpmConfig;
 
     // Parametro para o gerador do Grupo de Cobertura de P
     private static BigInteger g512 = new BigInteger(
@@ -57,10 +58,11 @@ public class TpmConnector {
     private KeyPairGenerator keyGen;
     private KeyAgreement keyAgree;
     private KeyPair pair;
+    private List<String> stateConfig;
 
-    public TpmConnector(String redisServer, TpmHostsConfig tpmHostsConfig) {
-        this.redisServer = redisServer;
-        this.tpmHostsConfig = tpmHostsConfig;
+    public TpmConnector(TpmConfig tpmConfig) {
+        this.tpmConfig = tpmConfig;
+        this.stateConfig = new ArrayList<String>();
     }
 
     public boolean checkTpm() {
@@ -68,7 +70,9 @@ public class TpmConnector {
         SSLSocketFactory f =
                 (SSLSocketFactory) SSLSocketFactory.getDefault();
         try {
-            SSLSocket c = (SSLSocket) f.createSocket(redisServer, 9999);
+            SSLSocket c = (SSLSocket) f.createSocket(this.tpmConfig.getHost(),
+                    Integer.parseInt(this.tpmConfig.getPort()));
+
             c.startHandshake();
 
             BufferedWriter w = new BufferedWriter(
@@ -106,7 +110,7 @@ public class TpmConnector {
         String nonce = Utils.randomNonce();
 
         return String.format("%s|%s|%s|%s|%s|%s", REQUEST_CODE, pubDH, nonce,
-                tpmHostsConfig.getCiphersuite(), tpmHostsConfig.getProvider(), tpmHostsConfig.getKeySize());
+                tpmConfig.getCiphersuite(), tpmConfig.getProvider(), tpmConfig.getKeySize());
     }
 
     private void startDiffieHellman() throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException {
@@ -122,7 +126,7 @@ public class TpmConnector {
     }
 
     private boolean analizeResponse(String response, String nonce) throws InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException, NoSuchPaddingException, BadPaddingException, IllegalBlockSizeException, DecoderException {
-        if(!response.equals(ERROR_MESSAGE)) {
+        if (!response.equals(ERROR_MESSAGE)) {
             String[] res = response.split("\\|");
 
             if (res[ATTESTATION_RESPONSE].equals(RESPONSE_CODE)) {
@@ -137,23 +141,53 @@ public class TpmConnector {
                     keyAgree.doPhase(p, true);
 
                     byte[] agreedKey = keyAgree.generateSecret();
-                    int keySize = Integer.parseInt(tpmHostsConfig.getKeySize()) / 8;
+                    int keySize = Integer.parseInt(tpmConfig.getKeySize()) / 8;
                     byte[] agreedCroppedKey = new byte[keySize];
                     System.arraycopy(agreedKey, 0, agreedCroppedKey, 0, keySize);
 
-                    String alg = tpmHostsConfig.getCiphersuite().split("\\/")[0];
+                    String alg = tpmConfig.getCiphersuite().split("\\/")[0];
 
-                    Cipher c = Cipher.getInstance(tpmHostsConfig.getCiphersuite(), tpmHostsConfig.getProvider());
+                    Cipher c = Cipher.getInstance(tpmConfig.getCiphersuite(), tpmConfig.getProvider());
                     c.init(Cipher.DECRYPT_MODE, new SecretKeySpec(agreedCroppedKey, alg));
 
-                    c.update(Hex.decodeHex(res[ATTESTATION_STATUS]));
-                    byte[] decryptedCore = c.doFinal();
+                    byte[] decryptedCore = c.doFinal(Hex.decodeHex(res[ATTESTATION_STATUS]));
 
-                    System.out.println("Attestation Status: " + new String(decryptedCore));
-                    return true;
+                    String processString = new String(decryptedCore);
+                    List<String> processList = stringTolist(processString);
+
+                    return checkValidState(processList);
                 }
             }
         }
         return false;
+    }
+
+    private boolean checkValidState(List<String> processList) {
+        for (String line : tpmConfig.getRunningPrograms()) {
+            if (!processList.get(0).contains(line)) {
+                return false;
+            }
+        }
+
+        for (String line : tpmConfig.getAttestationHashes()) {
+            if (!processList.get(1).contains(line)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private List<String> stringTolist(String processString) {
+        List<String> output = new ArrayList<String>();
+
+        String[] lines = processString.split("#");
+
+        for (String line : lines) {
+            line = line.replaceAll("&", " ");
+            output.add(line);
+        }
+
+        return output;
+
     }
 }

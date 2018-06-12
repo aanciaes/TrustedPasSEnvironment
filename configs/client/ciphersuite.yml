@@ -11,12 +11,25 @@ securityConfig:
   signatureAlgProvider: SunRsaSign
   signatureKeyName: asymkey
   signatureKeyPassword: P4s5w0rd
+  redisServer: 192.168.56.101
+  redisPassword:
 
-tpmHosts:
-  vmsHost: localhost
-  vmsPort: 9999
-  gosHost: locahost
-  gosPort: 8888
+
+vmsTpm:
+  host: 192.168.56.101
+  port: 9999
+  ciphersuite: aes/ECB/PKCS5Padding
+  keySize: 256
+  provider: SunJCE
+  runningPrograms:
+    - java
+    - ps
+  attestationHashes:
+    - ac8ceaf262d81bf742a4539c69f7798e1263d7c4914586620da3e685597b363a # Sha256 of redis-server bin
+
+gosTpm:
+  host: locahost
+  port: 8888
   ciphersuite: aes/ECB/PKCS5Padding
   keySize: 256
   provider: SunJCE

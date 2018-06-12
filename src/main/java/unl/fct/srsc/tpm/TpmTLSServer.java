@@ -50,10 +50,10 @@ public class TpmTLSServer {
     public static void main(String[] args) {
         serverConfig = Utils.readFromConfig();
 
-        String[] confciphersuites = new String [serverConfig.getCiphersuites().size()];
+        String[] confciphersuites = new String[serverConfig.getCiphersuites().size()];
         serverConfig.getCiphersuites().toArray(confciphersuites);
 
-        String[] confprotocols = new String [serverConfig.getConfProtocols().size()];
+        String[] confprotocols = new String[serverConfig.getConfProtocols().size()];
         serverConfig.getConfProtocols().toArray(confprotocols);
 
 
@@ -92,6 +92,7 @@ public class TpmTLSServer {
                     w.newLine();
                     w.flush();
                 }
+
                 w.close();
                 r.close();
                 c.close();
@@ -127,14 +128,14 @@ public class TpmTLSServer {
 
                 keyAgree.doPhase(p, true);
 
-                byte [] agreedKey = keyAgree.generateSecret();
-                byte [] agreedCroppedKey = new byte[keySize/8];
-                System.arraycopy(agreedKey,0,agreedCroppedKey, 0, keySize/8);
+                byte[] agreedKey = keyAgree.generateSecret();
+                byte[] agreedCroppedKey = new byte[keySize / 8];
+                System.arraycopy(agreedKey, 0, agreedCroppedKey, 0, keySize / 8);
                 System.out.println("Cropped key: " + Hex.encodeHexString(agreedCroppedKey));
 
                 String pubKey = ((DHPublicKey) pair.getPublic()).getY().toString();
 
-                byte [] encAttestationStatus = encryptStatus (tpmStatus, ciphersuite, provider, agreedCroppedKey);
+                byte[] encAttestationStatus = encryptStatus(tpmStatus, ciphersuite, provider, agreedCroppedKey);
 
                 return String.format("%s|%s:%s|%s", RESPONSE_CODE, pubKey, noncePlusOne,
                         Hex.encodeHexString(encAttestationStatus));
@@ -151,26 +152,22 @@ public class TpmTLSServer {
         return TpmStateData.getState();
     }
 
-    private static byte[] encryptStatus (List<String> tpmStatus, String ciphersuite, String provider, byte[] key) throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+    private static byte[] encryptStatus(List<String> tpmStatus, String ciphersuite, String provider, byte[] key) throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         String alg = ciphersuite.split("\\/")[0];
 
         Cipher c = Cipher.getInstance(ciphersuite, provider);
         c.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, alg));
-        c.update(listToBytes(tpmStatus));
 
-        return c.doFinal();
+        return c.doFinal(listToBytes(tpmStatus));
     }
 
-    private static byte[] listToBytes(List<String> list){
+    private static byte[] listToBytes(List<String> list) {
 
-        String result ="";
+        String result = "";
 
-        for ( String line: list) {
-            result += ":" +line;
+        for (String line : list) {
+            result +=  line + "#";
         }
-
-        result += "/";
-
         return result.getBytes();
     }
 }

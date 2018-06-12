@@ -3,14 +3,16 @@ package unl.fct.srsc.client.config;
 public class Configurations {
 
     private SecurityConfig securityConfig;
-    private TpmHostsConfig tpmHosts;
+    private VmsTpm vmsTpm;
+    private GosTpm gosTpm;
 
     public Configurations() {
     }
 
-    public Configurations(SecurityConfig securityConfig, TpmHostsConfig tpmHosts) {
+    public Configurations(SecurityConfig securityConfig, VmsTpm vmsTpm, GosTpm gosTpm) {
         this.securityConfig = securityConfig;
-        this.tpmHosts = tpmHosts;
+        this.vmsTpm = vmsTpm;
+        this.gosTpm = gosTpm;
     }
 
     public SecurityConfig getSecurityConfig() {
@@ -21,11 +23,19 @@ public class Configurations {
         this.securityConfig = securityConfig;
     }
 
-    public TpmHostsConfig getTpmHosts() {
-        return tpmHosts;
+    public VmsTpm getVmsTpm() {
+        return vmsTpm;
     }
 
-    public void setTpmHosts(TpmHostsConfig tpmHosts) {
-        this.tpmHosts = tpmHosts;
+    public void setVmsTpm(VmsTpm vmsTpm) {
+        this.vmsTpm = vmsTpm;
+    }
+
+    public GosTpm getGosTpm() {
+        return gosTpm;
+    }
+
+    public void setGosTpm(GosTpm gosTpm) {
+        this.gosTpm = gosTpm;
     }
 }
