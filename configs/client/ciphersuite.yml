@@ -11,10 +11,11 @@ securityConfig:
   signatureAlgProvider: SunRsaSign
   signatureKeyName: asymkey
   signatureKeyPassword: P4s5w0rd
+  redisServer: 192.168.56.101
   redisPassword:
 
 tpmHosts:
-  vmsHost: localhost
+  vmsHost: 192.168.56.101
   vmsPort: 9999
   gosHost: locahost
   gosPort: 8888

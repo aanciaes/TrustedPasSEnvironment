@@ -25,6 +25,8 @@ public class RedisTrustedClient {
 
     private static SecurityConfig securityConfig;
     private static TpmHostsConfig tpmHostsConfig;
+
+    private static String redisServer;
     private static Jedis cli = null;
 
     private static List<String> test = new ArrayList<String>();
@@ -39,6 +41,8 @@ public class RedisTrustedClient {
             setup();
 
             if (checkTpm()) {
+
+                connectRedis();
 
                 BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
@@ -69,7 +73,7 @@ public class RedisTrustedClient {
 
                 System.out.println("Total time  -------> " + (removeTime + getTime + setTime) + "ms");
                 System.out.println("Total operations  -------> 3000 ops");
-                System.out.println("Total operations per second -------> " + 3000/((removeTime + getTime + setTime)/1000) + "ops/s\n");
+                System.out.println("Total operations per second -------> " + 3000 / ((removeTime + getTime + setTime) / 1000) + "ops/s\n");
 
                 /*String command = "";
 
@@ -104,21 +108,10 @@ public class RedisTrustedClient {
 
 
     private static void setup() throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException {
-        String redisServer = System.getenv(REDIS_SERVER);
-        redisServer = redisServer == null ? LOCALHOST : redisServer;
-
         //Configurations
         Configurations confs = Utils.readFromConfig();
         securityConfig = confs.getSecurityConfig();
         tpmHostsConfig = confs.getTpmHosts();
-
-        cli = new Jedis(redisServer, 6379);
-        if (securityConfig.getRedisPassword() != null) {
-            cli.auth(securityConfig.getRedisPassword());
-        }
-        cli.ping(); //pinging database
-
-        System.out.println(REDIS_SERVER + " : " + redisServer);
 
         cipher = Cipher.getInstance(securityConfig.getCiphersuite(), securityConfig.getProvider());
 
@@ -126,12 +119,21 @@ public class RedisTrustedClient {
         keyPair = Utils.getKeyPairFromKeyStore(securityConfig);
     }
 
+    private static void connectRedis() {
+
+        redisServer = securityConfig.getRedisServer();
+        System.out.println(REDIS_SERVER + " : " + redisServer);
+
+        cli = new Jedis(redisServer, 6379);
+        if (securityConfig.getRedisPassword() != null) {
+            cli.auth(securityConfig.getRedisPassword());
+        }
+        cli.ping(); //pinging database
+    }
+
 
     private static boolean checkTpm() {
-        String redisServer = System.getenv(REDIS_SERVER);
-        redisServer = redisServer == null ? LOCALHOST : redisServer;
-
-        TpmConnector tpmConnector = new TpmConnector(redisServer, tpmHostsConfig);
+        TpmConnector tpmConnector = new TpmConnector(tpmHostsConfig);
 
         return tpmConnector.checkTpm();
     }

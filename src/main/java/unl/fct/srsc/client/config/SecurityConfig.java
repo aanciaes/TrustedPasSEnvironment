@@ -14,12 +14,13 @@ public class SecurityConfig {
     private String signatureAlgProvider;
     private String signatureKeyName;
     private String SignatureKeyPassword;
+    private String redisServer;
     private String redisPassword;
 
     public SecurityConfig() {
     }
 
-    public SecurityConfig(String ciphersuite, String provider, String hmac, String keyStoreType, String keyStoreName, String keyName, String keyPassword, String keyStorePassword, String signatureAlgorithm, String signatureAlgProvider, String signatureKeyName, String signatureKeyPassword, String redisPassword) {
+    public SecurityConfig(String ciphersuite, String provider, String hmac, String keyStoreType, String keyStoreName, String keyName, String keyPassword, String keyStorePassword, String signatureAlgorithm, String signatureAlgProvider, String signatureKeyName, String signatureKeyPassword, String redisServer, String redisPassword) {
         this.ciphersuite = ciphersuite;
         this.provider = provider;
         this.hmac = hmac;
@@ -32,6 +33,7 @@ public class SecurityConfig {
         this.signatureAlgProvider = signatureAlgProvider;
         this.signatureKeyName = signatureKeyName;
         SignatureKeyPassword = signatureKeyPassword;
+        this.redisServer = redisServer;
         this.redisPassword = redisPassword;
     }
 
@@ -129,6 +131,17 @@ public class SecurityConfig {
 
     public void setSignatureKeyPassword(String signatureKeyPassword) {
         SignatureKeyPassword = signatureKeyPassword;
+    }
+
+    public String getRedisServer() {
+        String redisServerEnv = System.getenv("REDIS_SERVER");
+        this.redisServer = redisServerEnv == null ? redisServer : redisServerEnv;
+
+        return redisServer==null ? "localhost" : redisServer;
+    }
+
+    public void setRedisServer(String redisServer) {
+        this.redisServer = redisServer;
     }
 
     public String getRedisPassword() {

@@ -37,7 +37,6 @@ public class TpmConnector {
 
     private static final String ERROR_MESSAGE = "Error Message";
 
-    private String redisServer;
     private TpmHostsConfig tpmHostsConfig;
 
     // Parametro para o gerador do Grupo de Cobertura de P
@@ -61,8 +60,7 @@ public class TpmConnector {
     private KeyPair pair;
     private List<String> stateConfig;
 
-    public TpmConnector(String redisServer, TpmHostsConfig tpmHostsConfig) {
-        this.redisServer = redisServer;
+    public TpmConnector(TpmHostsConfig tpmHostsConfig) {
         this.tpmHostsConfig = tpmHostsConfig;
         this.stateConfig = new ArrayList<String>();
         setStateConfig();
@@ -89,7 +87,9 @@ public class TpmConnector {
         SSLSocketFactory f =
                 (SSLSocketFactory) SSLSocketFactory.getDefault();
         try {
-            SSLSocket c = (SSLSocket) f.createSocket(redisServer, 9999);
+            SSLSocket c = (SSLSocket) f.createSocket(this.tpmHostsConfig.getVmsHost(),
+                    Integer.parseInt(this.tpmHostsConfig.getVmsPort()));
+
             c.startHandshake();
 
             BufferedWriter w = new BufferedWriter(

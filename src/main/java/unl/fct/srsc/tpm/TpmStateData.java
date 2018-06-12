@@ -7,20 +7,20 @@ import java.util.List;
 
 public class TpmStateData {
 
+    private static final String PS = "ps -o comm --no-heading";
+    private static final String DOCKER_PS = "docker ps";
+    private static final String DOCKER_EXEC = "docker exec -t";
+    private static final String SHA_REDIS = "sha256sum /usr/local/bin/redis-server";
+
     public static List<String> getState() throws IOException {
 
         List<String> result = new ArrayList<String>();
-        Process process = Runtime.getRuntime().exec("ps -o comm --no-heading");
-        result.addAll(print(process));
+        result.addAll(runCommand(PS));
 
-        process = Runtime.getRuntime().exec("docker ps");
-        String id = getRedisContainer(print(process));
+        String id = getRedisContainer(runCommand(DOCKER_PS));
+        result.addAll(clear(runCommand(DOCKER_EXEC + " " + id + " " + SHA_REDIS)));
 
-        process = Runtime.getRuntime().exec("docker exec -t " + id + " sha256sum /usr/local/bin/redis-server");
-        result.addAll(clear(print(process)));
-
-        process = Runtime.getRuntime().exec("docker exec -t " + id + " ps -eo user,comm --no-heading");
-        result.addAll(print(process));
+        result.addAll(runCommand(DOCKER_EXEC + " " + id + " " + PS));
 
         return result;
     }
@@ -44,7 +44,9 @@ public class TpmStateData {
         return "";
     }
 
-    private static List<String> print(Process p) throws IOException {
+    private static List<String> runCommand(String command) throws IOException {
+
+        Process p = Runtime.getRuntime().exec(command);
 
         List<String> state = new ArrayList<String>();
         String line;
