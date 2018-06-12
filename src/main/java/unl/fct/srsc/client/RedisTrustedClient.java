@@ -68,26 +68,6 @@ public class RedisTrustedClient {
                 System.out.println("Total time with TPM check  -------> " + (globalEnd - globalStart) + "ms");
                 System.out.println("Total operations  -------> 3000 ops");
                 System.out.println("Total operations per second -------> " + 3000 / ((removeTime + getTime + setTime) / 1000) + "ops/s\n");
-
-                /*String command = "";
-
-                while (!(command = br.readLine().trim()).equals("exit")) {
-
-                    if (command.equals("insert")) {
-                        processInsert(br);
-                    }
-                    if (command.equals("get")) {
-                        processGetByName(br);
-                    }
-                    if (command.equals("populate")) {
-                        processPopulate(br);
-                    }
-
-                    if (command.equals("getAll")) {
-                        printAllEntries();
-                    }
-                }
-                */
             }
 
             System.out.println("Bye");
@@ -135,46 +115,6 @@ public class RedisTrustedClient {
         TpmConnector tpmConnector = new TpmConnector(vmsTpm);
 
         return tpmConnector.checkTpm();
-    }
-
-    private static void processInsert(BufferedReader br) throws IOException {
-        System.out.println("Insert First Name:");
-        String name = br.readLine().trim();
-
-        System.out.println("\nInsert Last Name:");
-        String lastName = br.readLine().trim();
-
-        System.out.println("\nInsert Salary:");
-        String salary = br.readLine().trim();
-        
-        System.out.println("\nInsert Address:");
-        String address = br.readLine().trim();
-        
-        System.out.println("\nInsert Cat Name:");
-        String catName = br.readLine().trim();
-        
-        System.out.println("\nInsert GameOfThrones favourite house:");
-        String gotHouse = br.readLine().trim();
-
-        boolean inserted = jedisInsert(name, lastName, salary, address, catName, gotHouse);
-
-        System.out.println("Insert " + (inserted ? "Success" : "Failure"));
-        System.out.println("-----------\n");
-    }
-
-    private static void processGetByName(BufferedReader br) throws IOException {
-        System.out.println("Search by Name:");
-        String name = br.readLine().trim();
-
-        try {
-            Set<String> rst = jedisGetByName(name);
-
-            prettyPrint(rst);
-
-        } catch (Exception e) {
-            System.out.println("An error occured...");
-            e.printStackTrace();
-        }
     }
 
     private static boolean jedisInsert(String name, String lastName, String salary, String address, String catName, String gotHouse) {
@@ -285,8 +225,8 @@ public class RedisTrustedClient {
         String[] splitted = row.split("\\:");
 
         //TODO: make it better
-        String realRow = String.format("%s:%s:%s", splitted[0], splitted[1], splitted[2]);
-        String signatureField = splitted[3];
+        String realRow = String.format("%s:%s:%s:%s:%s:%s", splitted[0], splitted[1], splitted[2],splitted[3],splitted[4],splitted[5]);
+        String signatureField = splitted[6];
 
         try {
             Signature signature = Signature.getInstance(securityConfig.getSignatureAlgorithm(),
