@@ -8,7 +8,7 @@ Computers and networks Security TP2 Trusted PaaS Environment for Containerized S
 
 Run virtual box and install docker.
 
-The copy the jar file TrustedPaaS-1.0-jar-with-dependencies.jar to the virtual box guest OS.
+Copy the jar file TrustedPaaS-1.0-jar-with-dependencies.jar to the virtual box guest OS.
 Copy the config as well folder with the following structure:
 
               .
