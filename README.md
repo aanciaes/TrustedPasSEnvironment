@@ -74,7 +74,9 @@ To run the client you need to specify the host and port where stunnel is accepti
 
 ``docker run -it -e STUNNEL_HOST=192.168.118.32 -e STUNNEL_PORT=8888 aanciaes/srsc``
 
-You can specify the variable NUMBER_OF_OPS to change the number of operations of the benchmark with ``-e NUMBER_OF_OPS=1000``
+You can specify the variable NUMBER_OF_OPS to change the number of operations of the benchmark with 
+
+``-e NUMBER_OF_OPS=1000``
 
 ### Security Configurations
 
