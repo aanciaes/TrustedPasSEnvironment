@@ -68,8 +68,8 @@ public class RedisTrustedClient {
                 System.out.println("Total remove time -------> " + removeTime + "ms\n");
 
                 System.out.println("Total time  -------> " + (removeTime + getTime + setTime) + "ms");
-                System.out.println("Total operations  -------> 1000 ops");
-                System.out.println("Total operations per second -------> " + (removeTime + getTime + setTime) + "ops/s\n");
+                System.out.println("Total operations  -------> 3000 ops");
+                System.out.println("Total operations per second -------> " + 3000/((removeTime + getTime + setTime)/1000) + "ops/s\n");
 
                 /*String command = "";
 
@@ -398,7 +398,7 @@ public class RedisTrustedClient {
                 Random r = new Random();
                 int rdm = r.nextInt(test.size());
                 String keyword = test.get(rdm);
-                System.out.println("Keyword: " + keyword);
+
                 String uncheckedRow = cli.get(keyword);
                 if (checkIntegrity(uncheckedRow)) {
                     //split to remove integrity field
