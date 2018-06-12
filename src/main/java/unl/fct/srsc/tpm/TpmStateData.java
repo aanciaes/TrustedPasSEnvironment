@@ -11,6 +11,7 @@ public class TpmStateData {
     private static final String DOCKER_PS = "docker ps";
     private static final String DOCKER_EXEC = "docker exec -t";
     private static final String SHA_REDIS = "sha256sum /usr/local/bin/redis-server";
+    private static final String DOCKER_EXEC_PS = "ps -eo user,comm --no-heading";
 
     public static List<String> getState() throws IOException {
 
@@ -20,7 +21,7 @@ public class TpmStateData {
         String id = getRedisContainer(runCommand(DOCKER_PS));
         result.addAll(clear(runCommand(DOCKER_EXEC + " " + id + " " + SHA_REDIS)));
 
-        result.addAll(runCommand(DOCKER_EXEC + " " + id + " " + PS));
+        result.addAll(runCommand(DOCKER_EXEC + " " + id + " " + DOCKER_EXEC_PS));
 
         return result;
     }

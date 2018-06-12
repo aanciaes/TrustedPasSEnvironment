@@ -23,6 +23,7 @@ public class RedisTrustedClient {
     private static int numberOfOps = 1000;
 
     private static final String REDIS_SERVER = "REDIS_SERVER";
+    private static final String LOCALHOST = "localhost";
 
     private static SecurityConfig securityConfig;
     private static VmsTpm vmsTpm;
@@ -122,7 +123,7 @@ public class RedisTrustedClient {
         redisServer = securityConfig.getRedisServer();
         System.out.println(REDIS_SERVER + " : " + redisServer);
 
-        cli = new Jedis("localhost", 6379);
+        cli = new Jedis(LOCALHOST, 6379);
         if (securityConfig.getRedisPassword() != null) {
             cli.auth(securityConfig.getRedisPassword());
         }
