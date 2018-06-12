@@ -146,8 +146,17 @@ public class RedisTrustedClient {
 
         System.out.println("\nInsert Salary:");
         String salary = br.readLine().trim();
+        
+        System.out.println("\nInsert Address:");
+        String address = br.readLine().trim();
+        
+        System.out.println("\nInsert Cat Name:");
+        String catName = br.readLine().trim();
+        
+        System.out.println("\nInsert GameOfThrones favourite house:");
+        String gotHouse = br.readLine().trim();
 
-        boolean inserted = jedisInsert(name, lastName, salary);
+        boolean inserted = jedisInsert(name, lastName, salary, address, catName, gotHouse);
 
         System.out.println("Insert " + (inserted ? "Success" : "Failure"));
         System.out.println("-----------\n");
@@ -191,6 +200,11 @@ public class RedisTrustedClient {
 
             cli.set(key, rowIntegrity);
             cli.sadd(String.valueOf(name.hashCode()), key);
+            cli.sadd(String.valueOf(lastName.hashCode()), key);
+            cli.sadd(String.valueOf(salary.hashCode()), key);
+            cli.sadd(String.valueOf(address.hashCode()), key);
+            cli.sadd(String.valueOf(catName.hashCode()), key);
+            cli.sadd(String.valueOf(gotHouse.hashCode()), key);
 
             indexes.add(String.valueOf(key));
 
