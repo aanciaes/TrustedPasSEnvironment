@@ -66,7 +66,7 @@ Additionally you can specify your own redis configuration file with the argument
 If you want to specify a password, make sure to indicate it in the client config file as well
 
 ##### Important
-Make sure to setup port forwarding on virtual box as well, to map the port 6379 of the host to the VM (on 6379 as well) or setup the proper networking
+Make sure to setup port forwarding on virtual box as well, to map the port 6379 of the host to the VM (on 6379 as well) or setup the proper networking.
 
 ### Run client (project):
 
@@ -76,13 +76,13 @@ To run the client you need to specify the host and port where stunnel is accepti
 
 ### Security Configurations
 
-Per default, the client will use the blowfish encryption algorithm with a 448 byte key.
+By default, the client will use the blowfish encryption algorithm with a 448 byte key.
 To personalize the security configurations follow the instructions bellow.
 
 1. Create a folder anywhere on your computer with the following structure:
    
               .
-              ├── ciphersuite.yml                   # Confguration file
+              ├── ciphersuite.yml                   # Configuration file
               ├── clientTrustStore.yml              # TrustStore with the server certificate in it
               └── keystore.jceks                    # Keystore containing keys              
 
