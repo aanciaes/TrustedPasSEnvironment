@@ -38,7 +38,7 @@ public class RedisTrustedClient {
         try {
             setup();
 
-            if(checkTpm ()) {
+            if (checkTpm()) {
 
                 BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
@@ -113,7 +113,7 @@ public class RedisTrustedClient {
         tpmHostsConfig = confs.getTpmHosts();
 
         cli = new Jedis(redisServer, 6379);
-        if(securityConfig.getRedisPassword() != null){
+        if (securityConfig.getRedisPassword() != null) {
             cli.auth(securityConfig.getRedisPassword());
         }
         cli.ping(); //pinging database
@@ -127,7 +127,7 @@ public class RedisTrustedClient {
     }
 
 
-    private static boolean checkTpm () {
+    private static boolean checkTpm() {
         String redisServer = System.getenv(REDIS_SERVER);
         redisServer = redisServer == null ? LOCALHOST : redisServer;
 
@@ -190,9 +190,9 @@ public class RedisTrustedClient {
 
             cli.set(key, rowIntegrity);
             cli.sadd(String.valueOf(name.hashCode()), key);
-            
 
-            test.add(String.valueOf(name.hashCode()));
+
+            test.add(String.valueOf(key));
 
             return true;
         } catch (Exception e) {
@@ -249,8 +249,7 @@ public class RedisTrustedClient {
         }
         return rst;
     }
-    
-    
+
 
     private static boolean checkIntegrity(String row) throws DecoderException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException {
 
@@ -317,7 +316,7 @@ public class RedisTrustedClient {
 
         Faker faker = new Faker();
 
-        while(number > 0){
+        while (number > 0) {
 
             String firstName = faker.name().firstName();
             String lastName = faker.name().lastName();
@@ -359,89 +358,85 @@ public class RedisTrustedClient {
         System.out.println("Total get Time -> " + getTime + "ms");
 
     }
-        private static long getAll() throws InvalidKeyException, DecoderException, BadPaddingException, IllegalBlockSizeException, NoSuchProviderException, NoSuchAlgorithmException {
 
-            System.out.println("Number of entries: " + test.size());
+    private static long getAll() throws InvalidKeyException, DecoderException, BadPaddingException, IllegalBlockSizeException, NoSuchProviderException, NoSuchAlgorithmException {
 
-            cipher.init(Cipher.DECRYPT_MODE, keySecret);
+        System.out.println("Number of entries: " + test.size());
 
-            long startTime = System.currentTimeMillis();
+        cipher.init(Cipher.DECRYPT_MODE, keySecret);
 
-            for (String id : test) {
+        long startTime = System.currentTimeMillis();
 
-                Set<String> list = cli.smembers(id);
+        for (String id : test) {
 
-                for (String innerId : list) {
+            String uncheckedRow = cli.get(id);
 
-                    String uncheckedRow = cli.get(innerId);
+            if (checkIntegrity(uncheckedRow)) {
+                try {
+                    //split to remove integrity field
+                    String[] splitted = uncheckedRow.split("\\:");
 
-                    if (checkIntegrity(uncheckedRow)) {
-                        try {
-                            //split to remove integrity field
-                            String[] splitted = uncheckedRow.split("\\:");
+                    String row = decryptRow(splitted[0]);
+                    String authenticRow = checkAuthenticity(row);
 
-                            String row = decryptRow(splitted[0]);
-                            String authenticRow = checkAuthenticity(row);
-
-                        } catch (Exception e) {
-                            System.out.println("An error occurred while decrypting row...");
-                            e.printStackTrace();
-                        }
-                    }
+                } catch (Exception e) {
+                    System.out.println("An error occurred while decrypting row...");
+                    e.printStackTrace();
                 }
             }
-            return System.currentTimeMillis() - startTime;
         }
-        
-        private static void remove(int num) throws Exception{
+        return System.currentTimeMillis() - startTime;
+    }
 
-    		try{
-    			cipher.init(Cipher.DECRYPT_MODE,  keySecret);	
+    private static void remove(int num) throws Exception {
 
-    			Random r = new Random();
-    			
-    			while(num > 0){
-    				
-    				int rdm = r.nextInt(test.size()-1);
-    				String keyword = test.get(rdm);
-    				String uncheckedRow = cli.get(keyword);
-    				if (checkIntegrity(uncheckedRow)) {
-                            //split to remove integrity field
-                            String[] splitted = uncheckedRow.split("\\:");
+        try {
 
-                            String row = decryptRow(splitted[0]);
-                            String authenticRow = checkAuthenticity(row);
-                            
-                            for(int i = 1; i < splitted.length; i++){
-                            	
-                            	cli.srem(String.valueOf(splitted[i].hashCode()), keyword);
-                            	
-                            }
-    				}
-    				
-    				cli.set(keyword, generateRandomStr(100));
-    				
-    				cli.del(keyword);
+            while (num > 0) {
+                cipher.init(Cipher.DECRYPT_MODE, keySecret);
 
-    				test.remove(rdm);
-    				
-    				num--;
-    			}
-    			
-    			
-    		} catch (Exception e) {
-    			System.out.println("An error occurred while decrypting row...");
-    			e.printStackTrace();
-    		}
+                Random r = new Random();
+                int rdm = r.nextInt(test.size());
+                String keyword = test.get(rdm);
+                System.out.println("Keyword: " + keyword);
+                String uncheckedRow = cli.get(keyword);
+                if (checkIntegrity(uncheckedRow)) {
+                    //split to remove integrity field
+                    String[] splitted = uncheckedRow.split("\\:");
 
-    	}
+                    String row = decryptRow(splitted[0]);
+                    String authenticRow = checkAuthenticity(row);
 
-    	private static String generateRandomStr(int size){
-    		String str = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-    		Random r = new Random();
-    		StringBuilder s = new StringBuilder(size);
-    		for(int i = 0; i < size; i++) 
-    			s.append( str.charAt(r.nextInt(str.length())) );
-    		return s.toString();
-    	}
+                    for (int i = 1; i < splitted.length; i++) {
+
+                        cli.srem(String.valueOf(splitted[i].hashCode()), keyword);
+
+                    }
+                }
+
+                cli.set(keyword, generateRandomStr(100));
+
+                cli.del(keyword);
+
+                test.remove(rdm);
+
+                num--;
+            }
+
+
+        } catch (Exception e) {
+            System.out.println("An error occurred while decrypting row...");
+            e.printStackTrace();
+        }
+
+    }
+
+    private static String generateRandomStr(int size) {
+        String str = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        Random r = new Random();
+        StringBuilder s = new StringBuilder(size);
+        for (int i = 0; i < size; i++)
+            s.append(str.charAt(r.nextInt(str.length())));
+        return s.toString();
+    }
 }
