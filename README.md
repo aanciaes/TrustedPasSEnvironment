@@ -9,7 +9,7 @@ Computers and networks Security TP2 Trusted PaaS Environment for Containerized S
 Run virtual box and install docker.
 
 Copy the jar file TrustedPaaS-1.0-jar-with-dependencies.jar to the virtual box guest OS.
-Copy the config as well folder with the following structure:
+Copy the config folder as well with the following structure:
 
               .
               └── configs                   # Confguration folder
@@ -29,7 +29,7 @@ Copy the files ``private.pem`` and ``redis-server.conf`` in folder ````configs/s
 
 Run stunnel with ````sudo service stunnel4 start```` 
 
-And in the directory created above to the tpm, run the TPM module with ````java -jar .:TrustedPaaS-1.0-jar-with-dependencies.jar unl.fct.srsc.tpm.TpmTLSServer````
+And in the directory created above to the tpm, run the TPM module with ````java -cp .:TrustedPaaS-1.0-jar-with-dependencies.jar unl.fct.srsc.tpm.TpmTLSServer````
 
 Then run redis with the following command ```docker run -p 6379:6379 redis```. You can provide a redis.conf file and set a password if you like.
 
