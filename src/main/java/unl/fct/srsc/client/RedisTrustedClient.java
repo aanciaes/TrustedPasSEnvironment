@@ -146,8 +146,17 @@ public class RedisTrustedClient {
 
         System.out.println("\nInsert Salary:");
         String salary = br.readLine().trim();
+        
+        System.out.println("\nInsert Address:");
+        String address = br.readLine().trim();
+        
+        System.out.println("\nInsert Cat Name:");
+        String catName = br.readLine().trim();
+        
+        System.out.println("\nInsert GameOfThrones favourite house:");
+        String gotHouse = br.readLine().trim();
 
-        boolean inserted = jedisInsert(name, lastName, salary);
+        boolean inserted = jedisInsert(name, lastName, salary, address, catName, gotHouse);
 
         System.out.println("Insert " + (inserted ? "Success" : "Failure"));
         System.out.println("-----------\n");
@@ -168,9 +177,9 @@ public class RedisTrustedClient {
         }
     }
 
-    private static boolean jedisInsert(String name, String lastName, String salary) {
+    private static boolean jedisInsert(String name, String lastName, String salary, String address, String catName, String gotHouse) {
 
-        String row = String.format("%s:%s:%s", name, lastName, salary);
+        String row = String.format("%s:%s:%s:%s:%s:%s", name, lastName, salary, address, catName, gotHouse);
         row = signRow(row);
 
         try {
@@ -191,6 +200,11 @@ public class RedisTrustedClient {
 
             cli.set(key, rowIntegrity);
             cli.sadd(String.valueOf(name.hashCode()), key);
+            cli.sadd(String.valueOf(lastName.hashCode()), key);
+            cli.sadd(String.valueOf(salary.hashCode()), key);
+            cli.sadd(String.valueOf(address.hashCode()), key);
+            cli.sadd(String.valueOf(catName.hashCode()), key);
+            cli.sadd(String.valueOf(gotHouse.hashCode()), key);
 
             indexes.add(String.valueOf(key));
 
@@ -302,9 +316,9 @@ public class RedisTrustedClient {
 
     private static void prettyPrint(Set<String> rows) {
 
-        System.out.println("-----------------------------------------------------");
-        System.out.println("|    FirstName    |    LastName    |      Salary    |");
-        System.out.println("-----------------------------------------------------");
+        System.out.println("--------------------------------------------------------------------------------------------------------");
+        System.out.println("|    FirstName    |    LastName    |      Salary    |    Address    |    CatName    |      GOTHouse    |");
+        System.out.println("--------------------------------------------------------------------------------------------------------");
 
         for (String row : rows) {
             System.out.println(row);
@@ -318,11 +332,14 @@ public class RedisTrustedClient {
         for (int i = 0; i < numberOfOps; i++) {
             String firstName = faker.name().firstName();
             String lastName = faker.name().lastName();
+            String streetAddress = faker.address().streetAddress();
+            String catName = faker.cat().name();
+            String gotHouse = faker.gameOfThrones().house();
             Random rand = new Random();
             int integerValue = rand.nextInt(200000);
             String value = String.valueOf(integerValue);
 
-            jedisInsert(firstName, lastName, value);
+            jedisInsert(firstName, lastName, value, streetAddress, catName, gotHouse);
         }
         return System.currentTimeMillis() - start;
     }

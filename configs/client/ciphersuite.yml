@@ -21,6 +21,11 @@ vmsTpm:
   ciphersuite: aes/ECB/PKCS5Padding
   keySize: 256
   provider: SunJCE
+  runningPrograms:
+    - java
+    - ps
+  attestationHashes:
+    - ac8ceaf262d81bf742a4539c69f7798e1263d7c4914586620da3e685597b363a # Sha256 of redis-server bin
 
 gosTpm:
   host: locahost
