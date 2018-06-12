@@ -11,32 +11,32 @@ public class TpmStateData {
     private static final String DOCKER_PS = "docker ps";
     private static final String DOCKER_EXEC = "docker exec -t";
     private static final String SHA_REDIS = "sha256sum /usr/local/bin/redis-server";
-    private static final String DOCKER_EXEC_PS = "ps -eo user,comm --no-heading";
+    private static final String DOCKER_EXEC_PS = "ps -eo comm --no-heading";
 
     public static List<String> getState() throws IOException {
 
         List<String> result = new ArrayList<String>();
-        result.addAll(runCommand(PS));
+        result.add(0,runCommand(PS));
 
         String id = getRedisContainer(runCommand(DOCKER_PS));
-        result.addAll(clear(runCommand(DOCKER_EXEC + " " + id + " " + SHA_REDIS)));
+        result.add(1, clear(runCommand(DOCKER_EXEC + " " + id + " " + SHA_REDIS)));
 
-        result.addAll(runCommand(DOCKER_EXEC + " " + id + " " + DOCKER_EXEC_PS));
+        result.set(0, result.get(0) + runCommand(DOCKER_EXEC + " " + id + " " + DOCKER_EXEC_PS));
 
         return result;
     }
 
-    private static List<String> clear(List<String> print) {
-        List<String> rst = new ArrayList<String>();
-        String[] t = print.get(0).split("&");
-        rst.add(t[0]);
+    private static String clear(String print) {
+        String[] rst = print.split("&");
 
-        return rst;
+        return rst[0];
+
     }
 
-    private static String getRedisContainer(List<String> ps) {
+    private static String getRedisContainer(String ps) {
 
-        for(String line : ps){
+        String[] splitted = ps.split(":");
+        for(String line : splitted){
             if(line.contains("redis")){
                 String[] splited = line.split("&");
                 return splited[0];
@@ -45,11 +45,11 @@ public class TpmStateData {
         return "";
     }
 
-    private static List<String> runCommand(String command) throws IOException {
+    private static String runCommand(String command) throws IOException {
 
         Process p = Runtime.getRuntime().exec(command);
 
-        List<String> state = new ArrayList<String>();
+        String state ="";
         String line;
         BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
         int n = 0;
@@ -61,8 +61,7 @@ public class TpmStateData {
                 finalLine += newLine[x] + "&";
             }
 
-            state.add(n++, finalLine);
-            System.out.println(finalLine);
+            state += finalLine + ":";
         }
         br.close();
 

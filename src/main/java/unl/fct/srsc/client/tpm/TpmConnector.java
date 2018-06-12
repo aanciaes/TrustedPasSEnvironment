@@ -63,23 +63,6 @@ public class TpmConnector {
     public TpmConnector(TpmConfig tpmConfig) {
         this.tpmConfig = tpmConfig;
         this.stateConfig = new ArrayList<String>();
-        setStateConfig();
-    }
-
-    private void setStateConfig() {
-        String line = "bash";
-        stateConfig.add(line);
-        line = "java";
-        stateConfig.add(line);
-        line = "ps";
-        stateConfig.add(line);
-        line = "redis redis-server";
-        stateConfig.add(line);
-        line="root ps";
-        stateConfig.add(line);
-        line="fb34c1c401087ba9d5505255747534e4a62e3855162966d7c7b092b79bbba2fa";
-        stateConfig.add(line);
-
     }
 
     public boolean checkTpm() {
