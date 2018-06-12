@@ -61,9 +61,7 @@ and run the server the TLS server again with the same command.
 #### Redis Configuration file
 Additionally you can specify your own redis configuration file with the argument
 
-````-v /path/to/redis.conf:/home/project/configs````
-
-Make sure to always leave the daemonize configuration to YES so redis can run smoothly on the background.
+````-v /myredis/conf/redis.conf:/usr/local/etc/redis/redis.conf````
 
 If you want to specify a password, make sure to indicate it in the client config file as well
 
