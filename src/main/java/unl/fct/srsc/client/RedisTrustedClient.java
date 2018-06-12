@@ -14,14 +14,14 @@ import unl.fct.srsc.client.utils.Utils;
 import javax.crypto.*;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.security.*;
 import java.util.*;
 
 public class RedisTrustedClient {
 
+    private static int numberOfOps = 1000;
+
     private static final String REDIS_SERVER = "REDIS_SERVER";
-    private static final String LOCALHOST = "localhost";
 
     private static SecurityConfig securityConfig;
     private static TpmHostsConfig tpmHostsConfig;
@@ -29,7 +29,7 @@ public class RedisTrustedClient {
     private static String redisServer;
     private static Jedis cli = null;
 
-    private static List<String> test = new ArrayList<String>();
+    private static List<String> indexes = new ArrayList<String>();
 
     private static Key keySecret = null;
     private static KeyPair keyPair = null;
@@ -40,38 +40,29 @@ public class RedisTrustedClient {
         try {
             setup();
 
-            if (checkTpm()) {
+            long globalStart = System.currentTimeMillis();
 
+            if (checkTpm()) {
                 connectRedis();
 
-                BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
-                //System.out.println("Populating with " + Integer.parseInt(args[0]) +" elements!");
-                //processPopulate(Integer.parseInt(args[0]));
-
-
                 System.out.println("-------------- Start Benchmark ------------");
+                System.out.println("Set " + numberOfOps + " entries");
+                long setTime = processPopulate();
 
-                System.out.println("Set 1000 entries");
-                long setStart = System.currentTimeMillis();
-                processPopulate(1000);
-                long setTime = System.currentTimeMillis() - setStart;
+                System.out.println("Get " + numberOfOps + " entries");
+                long getTime = getAll();
 
-                System.out.println("Get 1000 entries");
-                long getStart = System.currentTimeMillis();
-                getAll();
-                long getTime = System.currentTimeMillis() - getStart;
+                System.out.println("Remove " + numberOfOps + " entries\n");
+                long removeTime = remove();
 
-                System.out.println("Remove 1000 entries" + "\n");
-                long removeStart = System.currentTimeMillis();
-                remove(1000);
-                long removeTime = System.currentTimeMillis() - removeStart;
+                long globalEnd = System.currentTimeMillis();
 
                 System.out.println("Total set time -------> " + setTime + "ms");
                 System.out.println("Total get time -------> " + getTime + "ms");
                 System.out.println("Total remove time -------> " + removeTime + "ms\n");
 
                 System.out.println("Total time  -------> " + (removeTime + getTime + setTime) + "ms");
+                System.out.println("Total time with TPM check  -------> " + (globalEnd - globalStart) + "ms");
                 System.out.println("Total operations  -------> 3000 ops");
                 System.out.println("Total operations per second -------> " + 3000 / ((removeTime + getTime + setTime) / 1000) + "ops/s\n");
 
@@ -108,6 +99,9 @@ public class RedisTrustedClient {
 
 
     private static void setup() throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException {
+        String numberOfOpsEnv = System.getenv("NUMBER_OF_OPS");
+        numberOfOps = numberOfOpsEnv == null ? numberOfOps : Integer.parseInt(numberOfOpsEnv);
+
         //Configurations
         Configurations confs = Utils.readFromConfig();
         securityConfig = confs.getSecurityConfig();
@@ -194,7 +188,7 @@ public class RedisTrustedClient {
             cli.sadd(String.valueOf(name.hashCode()), key);
 
 
-            test.add(String.valueOf(key));
+            indexes.add(String.valueOf(key));
 
             return true;
         } catch (Exception e) {
@@ -229,8 +223,6 @@ public class RedisTrustedClient {
 
         Set<String> indexes = cli.smembers(key);
         System.out.println("Number of entries: " + indexes.size());
-
-        cipher.init(Cipher.DECRYPT_MODE, keySecret);
 
         for (String id : indexes) {
             String uncheckedRow = cli.get(id);
@@ -299,7 +291,8 @@ public class RedisTrustedClient {
         return null;
     }
 
-    private static String decryptRow(String row) throws DecoderException, BadPaddingException, IllegalBlockSizeException {
+    private static String decryptRow(String row) throws DecoderException, BadPaddingException, IllegalBlockSizeException, InvalidKeyException {
+        cipher.init(Cipher.DECRYPT_MODE, keySecret);
         return new String(cipher.doFinal(Hex.decodeHex(row)));
     }
 
@@ -314,12 +307,11 @@ public class RedisTrustedClient {
         }
     }
 
-    private static void processPopulate(int number) throws BadPaddingException {
-
+    private static long processPopulate() throws BadPaddingException {
         Faker faker = new Faker();
+        long start = System.currentTimeMillis();
 
-        while (number > 0) {
-
+        for (int i = 0; i < numberOfOps; i++) {
             String firstName = faker.name().firstName();
             String lastName = faker.name().lastName();
             Random rand = new Random();
@@ -327,50 +319,15 @@ public class RedisTrustedClient {
             String value = String.valueOf(integerValue);
 
             jedisInsert(firstName, lastName, value);
-
-            number--;
         }
-
+        return System.currentTimeMillis() - start;
     }
 
-    private static void printAllEntries() {
 
-        long getTime = 0;
-        try {
-            getTime = getAll();
-
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-
-        } catch (DecoderException e) {
-            e.printStackTrace();
-
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-
-        } catch (NoSuchProviderException e) {
-            e.printStackTrace();
-
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        System.out.println("Total get Time -> " + getTime + "ms");
-
-    }
-
-    private static long getAll() throws InvalidKeyException, DecoderException, BadPaddingException, IllegalBlockSizeException, NoSuchProviderException, NoSuchAlgorithmException {
-
-        System.out.println("Number of entries: " + test.size());
-
-        cipher.init(Cipher.DECRYPT_MODE, keySecret);
-
+    private static long getAll() throws InvalidKeyException, DecoderException, NoSuchProviderException, NoSuchAlgorithmException {
         long startTime = System.currentTimeMillis();
 
-        for (String id : test) {
-
+        for (String id : indexes) {
             String uncheckedRow = cli.get(id);
 
             if (checkIntegrity(uncheckedRow)) {
@@ -390,16 +347,15 @@ public class RedisTrustedClient {
         return System.currentTimeMillis() - startTime;
     }
 
-    private static void remove(int num) throws Exception {
+    private static long remove() {
+        long start = System.currentTimeMillis();
 
         try {
-
-            while (num > 0) {
-                cipher.init(Cipher.DECRYPT_MODE, keySecret);
+            for (int i = 0; i < numberOfOps; i++) {
 
                 Random r = new Random();
-                int rdm = r.nextInt(test.size());
-                String keyword = test.get(rdm);
+                int rdm = r.nextInt(indexes.size());
+                String keyword = indexes.get(rdm);
 
                 String uncheckedRow = cli.get(keyword);
                 if (checkIntegrity(uncheckedRow)) {
@@ -409,28 +365,23 @@ public class RedisTrustedClient {
                     String row = decryptRow(splitted[0]);
                     String authenticRow = checkAuthenticity(row);
 
-                    for (int i = 1; i < splitted.length; i++) {
-
-                        cli.srem(String.valueOf(splitted[i].hashCode()), keyword);
-
+                    for (int j = 1; j < splitted.length; j++) {
+                        cli.srem(String.valueOf(splitted[j].hashCode()), keyword);
                     }
+
+                    String randomString = generateRandomStr(100);
+                    cli.set(keyword, randomString); //No need to encrypt random data
+                    assert cli.get(keyword).equals(randomString);
+
+                    cli.del(keyword);
+                    indexes.remove(rdm);
                 }
-
-                cli.set(keyword, generateRandomStr(100));
-
-                cli.del(keyword);
-
-                test.remove(rdm);
-
-                num--;
             }
-
-
         } catch (Exception e) {
             System.out.println("An error occurred while decrypting row...");
             e.printStackTrace();
         }
-
+        return System.currentTimeMillis() - start;
     }
 
     private static String generateRandomStr(int size) {
