@@ -167,13 +167,16 @@ public class TpmConnector {
     private boolean checkValidState(List<String> processList) {
         int n = 0;
 
-        for(String line : processList){
+        for(String line : tpmConfig.getRunningPrograms()) {
+            if (!processList.get(0).contains(line)) {
+                return false;
+            }
+        }
 
-           if(!processList.get(n++).trim().equals(line.trim())){
-               System.out.println("This - > " + processList.get(n).trim() + " equal to -> " + line.trim());
-               return false;
-           }
-
+        for(String line : tpmConfig.getAttestationHashes()){
+            if(!processList.get(1).contains(line)){
+                return false;
+            }
         }
         return true;
     }
