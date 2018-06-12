@@ -126,7 +126,7 @@ public class TpmConnector {
     }
 
     private boolean analizeResponse(String response, String nonce) throws InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException, NoSuchPaddingException, BadPaddingException, IllegalBlockSizeException, DecoderException {
-        if(!response.equals(ERROR_MESSAGE)) {
+        if (!response.equals(ERROR_MESSAGE)) {
             String[] res = response.split("\\|");
 
             if (res[ATTESTATION_RESPONSE].equals(RESPONSE_CODE)) {
@@ -153,8 +153,6 @@ public class TpmConnector {
                     byte[] decryptedCore = c.doFinal(Hex.decodeHex(res[ATTESTATION_STATUS]));
 
                     String processString = new String(decryptedCore);
-                    System.out.println("Attestation Status: " + processString);
-
                     List<String> processList = stringTolist(processString);
 
                     return checkValidState(processList);
@@ -165,16 +163,14 @@ public class TpmConnector {
     }
 
     private boolean checkValidState(List<String> processList) {
-        int n = 0;
-
-        for(String line : tpmConfig.getRunningPrograms()) {
+        for (String line : tpmConfig.getRunningPrograms()) {
             if (!processList.get(0).contains(line)) {
                 return false;
             }
         }
 
-        for(String line : tpmConfig.getAttestationHashes()){
-            if(!processList.get(1).contains(line)){
+        for (String line : tpmConfig.getAttestationHashes()) {
+            if (!processList.get(1).contains(line)) {
                 return false;
             }
         }
@@ -186,9 +182,9 @@ public class TpmConnector {
 
         String[] lines = processString.split("#");
 
-        for(String line: lines){
-                line = line.replaceAll("&", " ");
-                output.add(line);
+        for (String line : lines) {
+            line = line.replaceAll("&", " ");
+            output.add(line);
         }
 
         return output;

@@ -13,8 +13,6 @@ import unl.fct.srsc.client.tpm.TpmConnector;
 import unl.fct.srsc.client.utils.Utils;
 
 import javax.crypto.*;
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.security.*;
 import java.util.*;
 
@@ -66,8 +64,8 @@ public class RedisTrustedClient {
 
                 System.out.println("Total time  -------> " + (removeTime + getTime + setTime) + "ms");
                 System.out.println("Total time with TPM check  -------> " + (globalEnd - globalStart) + "ms");
-                System.out.println("Total operations  -------> 3000 ops");
-                System.out.println("Total operations per second -------> " + 3000 / ((removeTime + getTime + setTime) / 1000) + "ops/s\n");
+                System.out.println("Total operations  -------> " + (numberOfOps * 3) + " ops");
+                System.out.println("Total operations per second -------> " + (numberOfOps*3) / ((removeTime + getTime + setTime) / 1000) + "ops/s\n");
             }
 
             System.out.println("Bye");
@@ -225,7 +223,7 @@ public class RedisTrustedClient {
         String[] splitted = row.split("\\:");
 
         //TODO: make it better
-        String realRow = String.format("%s:%s:%s:%s:%s:%s", splitted[0], splitted[1], splitted[2],splitted[3],splitted[4],splitted[5]);
+        String realRow = String.format("%s:%s:%s:%s:%s:%s", splitted[0], splitted[1], splitted[2], splitted[3], splitted[4], splitted[5]);
         String signatureField = splitted[6];
 
         try {
