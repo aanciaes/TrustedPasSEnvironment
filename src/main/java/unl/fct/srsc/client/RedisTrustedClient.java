@@ -14,6 +14,7 @@ import unl.fct.srsc.client.utils.Utils;
 import javax.crypto.*;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.net.URI;
 import java.security.*;
 import java.util.*;
 
@@ -89,6 +90,7 @@ public class RedisTrustedClient {
 
             System.out.println("Bye");
         } catch (JedisConnectionException uh) {
+            uh.printStackTrace();
             System.out.println("REDIS_SERVER didn't respond.");
             System.exit(1);
         } catch (Exception e) {
@@ -118,7 +120,7 @@ public class RedisTrustedClient {
         redisServer = securityConfig.getRedisServer();
         System.out.println(REDIS_SERVER + " : " + redisServer);
 
-        cli = new Jedis(redisServer, 6379);
+        cli = new Jedis("localhost", 6379);
         if (securityConfig.getRedisPassword() != null) {
             cli.auth(securityConfig.getRedisPassword());
         }
@@ -186,7 +188,6 @@ public class RedisTrustedClient {
 
             cli.set(key, rowIntegrity);
             cli.sadd(String.valueOf(name.hashCode()), key);
-
 
             indexes.add(String.valueOf(key));
 
