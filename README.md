@@ -78,6 +78,10 @@ You can specify the variable NUMBER_OF_OPS to change the number of operations of
 
 ``-e NUMBER_OF_OPS=1000``
 
+### Important
+
+The client TPM checks the hash of the redis-server bin file. Make sure to change it on your configuration file or the client may not run.
+
 ### Security Configurations
 
 By default, the client will use the blowfish encryption algorithm with a 448 byte key.
